@@ -258,11 +258,22 @@
     
     .feature-bar {
       background: #e9ecef;
-      height: 30px;
+      height: 35px;
       border-radius: 5px;
       margin: 8px 0;
       position: relative;
       overflow: hidden;
+    }
+    
+    .feature-bar-label {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #2d3748;
+      font-weight: 600;
+      font-size: 0.95em;
+      z-index: 1;
     }
     
     .feature-bar-fill {
@@ -271,10 +282,12 @@
       transition: width 0.5s ease;
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       padding: 0 10px;
       color: white;
-      font-size: 0.85em;
-      font-weight: 600;
+      font-size: 1em;
+      font-weight: 700;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
     }
     
     .eda-section {
@@ -373,13 +386,6 @@
     .quality-status.warning { background: #feebc8; color: #7c2d12; }
     .quality-status.bad { background: #fed7d7; color: #742a2a; }
     
-    .action-buttons {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 15px 0;
-    }
-    
     .data-table {
       width: 100%;
       border-collapse: collapse;
@@ -475,11 +481,6 @@
       transform: translateX(5px);
     }
     
-    .option-card.selected {
-      background: #e7f3ff;
-      border-left-color: #3182ce;
-    }
-    
     .recommendation-badge {
       background: #48bb78;
       color: white;
@@ -487,6 +488,151 @@
       border-radius: 12px;
       font-size: 0.75em;
       margin-left: 10px;
+    }
+    
+    .dataset-viewer {
+      background: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .dataset-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .dataset-table-container {
+      max-height: 500px;
+      overflow: auto;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+    }
+    
+    .dataset-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9em;
+    }
+    
+    .dataset-table thead {
+      position: sticky;
+      top: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      z-index: 10;
+    }
+    
+    .dataset-table th {
+      color: white;
+      padding: 10px;
+      text-align: left;
+      font-weight: 600;
+      border-right: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .dataset-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e9ecef;
+      border-right: 1px solid #e9ecef;
+    }
+    
+    .dataset-table tbody tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .variable-selector {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border: 2px solid #e9ecef;
+    }
+    
+    .variable-selector h4 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    
+    .variable-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .variable-option {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .variable-option:hover {
+      background: #e9ecef;
+      border-color: #667eea;
+    }
+    
+    .variable-option.selected {
+      background: #e7f3ff;
+      border-color: #667eea;
+    }
+    
+    .confusion-matrix {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    
+    .confusion-cell {
+      background: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    
+    .confusion-cell.header {
+      background: #667eea;
+      color: white;
+    }
+    
+    .confusion-cell.tp {
+      background: #c6f6d5;
+      color: #22543d;
+      font-size: 1.5em;
+    }
+    
+    .confusion-cell.tn {
+      background: #c6f6d5;
+      color: #22543d;
+      font-size: 1.5em;
+    }
+    
+    .confusion-cell.fp {
+      background: #fed7d7;
+      color: #742a2a;
+      font-size: 1.5em;
+    }
+    
+    .confusion-cell.fn {
+      background: #fed7d7;
+      color: #742a2a;
+      font-size: 1.5em;
+    }
+    
+    .batch-upload {
+      background: #e7f3ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      border-left: 4px solid #3182ce;
     }
     
     @media (max-width: 768px) {
@@ -526,6 +672,22 @@
           <input type="file" id="dataFile" accept=".csv">
         </div>
         <button id="loadDataBtn">Load & Analyze Data</button>
+        <button id="viewDatasetBtn" style="display: none;">View Dataset</button>
+        
+        <!-- Dataset Viewer -->
+        <div id="datasetViewer" class="dataset-viewer" style="display: none;">
+          <h3>📋 Dataset Viewer</h3>
+          <div class="dataset-controls">
+            <button class="secondary" onclick="displayDataset('all')">Show All Data</button>
+            <button class="secondary" onclick="displayDataset('first10')">First 10 Rows</button>
+            <button class="secondary" onclick="displayDataset('last10')">Last 10 Rows</button>
+            <button class="danger" onclick="closeDatasetViewer()">Close</button>
+          </div>
+          <div id="datasetInfo" style="margin-bottom: 10px; color: #6c757d;"></div>
+          <div class="dataset-table-container">
+            <table class="dataset-table" id="datasetTable"></table>
+          </div>
+        </div>
         
         <!-- Quick Overview -->
         <div id="quickOverview"></div>
@@ -549,12 +711,28 @@
         <div id="numerical" class="eda-content eda-section">
           <h3>📊 Numerical Variables Analysis</h3>
           <div id="numericalContent"></div>
+          
+          <!-- Variable Selector -->
+          <div class="variable-selector">
+            <h4>Select Additional Variables to Visualize:</h4>
+            <div id="numericalVariableSelector" class="variable-grid"></div>
+            <button class="secondary" style="margin-top: 10px;" onclick="visualizeSelectedNumerical()">Visualize Selected</button>
+          </div>
+          <div id="additionalNumericalCharts"></div>
         </div>
         
         <!-- Categorical Analysis Tab -->
         <div id="categorical" class="eda-content eda-section">
           <h3>📁 Categorical Variables Analysis</h3>
           <div id="categoricalContent"></div>
+          
+          <!-- Variable Selector -->
+          <div class="variable-selector">
+            <h4>Select Additional Variables to Visualize:</h4>
+            <div id="categoricalVariableSelector" class="variable-grid"></div>
+            <button class="secondary" style="margin-top: 10px;" onclick="visualizeSelectedCategorical()">Visualize Selected</button>
+          </div>
+          <div id="additionalCategoricalCharts"></div>
         </div>
         
         <!-- Correlations Tab -->
@@ -586,30 +764,43 @@
       <!-- Real-time Prediction -->
       <div class="section">
         <h2>🔮 Step 3: Real-Time Churn Prediction</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
-          <div>
-            <label>Tenure (months):</label>
-            <input type="number" id="tenure" value="12" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+        
+        <!-- Single Prediction -->
+        <div style="border: 2px solid #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <h4 style="color: #667eea; margin-bottom: 10px;">Single Customer Prediction</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
+            <div>
+              <label>Tenure (months):</label>
+              <input type="number" id="tenure" value="12" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+            </div>
+            <div>
+              <label>Monthly Charges ($):</label>
+              <input type="number" id="monthlyCharges" value="70" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+            </div>
+            <div>
+              <label>Total Charges ($):</label>
+              <input type="number" id="totalCharges" value="840" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+            </div>
+            <div>
+              <label>Contract Type:</label>
+              <select id="contract" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                <option value="0">Month-to-month</option>
+                <option value="1">One year</option>
+                <option value="2">Two year</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label>Monthly Charges ($):</label>
-            <input type="number" id="monthlyCharges" value="70" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-          </div>
-          <div>
-            <label>Total Charges ($):</label>
-            <input type="number" id="totalCharges" value="840" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-          </div>
-          <div>
-            <label>Contract Type:</label>
-            <select id="contract" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-              <option value="0">Month-to-month</option>
-              <option value="1">One year</option>
-              <option value="2">Two year</option>
-            </select>
-          </div>
+          <button id="predictBtn" disabled>Predict Churn Risk</button>
         </div>
-        <button id="predictBtn" disabled>Predict Churn Risk</button>
-        <button id="batchPredictBtn" disabled>Batch Prediction (Top 10)</button>
+        
+        <!-- Batch Prediction -->
+        <div class="batch-upload">
+          <h4 style="color: #3182ce; margin-bottom: 10px;">📊 Batch Prediction from CSV</h4>
+          <p style="margin-bottom: 10px; color: #6c757d;">Upload a CSV file with customer data to predict churn for multiple customers</p>
+          <input type="file" id="batchPredictionFile" accept=".csv" style="margin-bottom: 10px;">
+          <button id="batchPredictFromFileBtn" disabled>Predict from CSV</button>
+          <button id="batchPredictBtn" disabled>Predict Top 10 At-Risk (from loaded data)</button>
+        </div>
         
         <div id="predictionResults"></div>
       </div>
@@ -632,6 +823,12 @@
         <div class="chart-container">
           <canvas id="metricsChart"></canvas>
         </div>
+      </div>
+      
+      <!-- Post-Training Analysis -->
+      <div class="section full-width">
+        <h2>🔬 Post-Training Analysis & Model Interpretability</h2>
+        <div id="postTrainingAnalysis"></div>
       </div>
     </div>
   </div>
