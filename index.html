@@ -19,7 +19,7 @@
     }
     
     .container { 
-      max-width: 1400px; 
+      max-width: 1600px; 
       margin: 0 auto;
       background: white;
       border-radius: 20px;
@@ -140,6 +140,18 @@
       transform: none;
     }
     
+    button.secondary {
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    }
+    
+    button.danger {
+      background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+    }
+    
+    button.info {
+      background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    }
+    
     .status-box {
       background: white;
       padding: 15px;
@@ -211,6 +223,9 @@
       position: relative;
       height: 300px;
       margin: 20px 0;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
     }
     
     .retention-strategy {
@@ -262,9 +277,225 @@
       font-weight: 600;
     }
     
+    .eda-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 15px 0;
+      border: 2px solid #e9ecef;
+    }
+    
+    .eda-section h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .eda-tabs {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+    }
+    
+    .eda-tab {
+      background: #e9ecef;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .eda-tab.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .eda-content {
+      display: none;
+      animation: fadeIn 0.3s;
+    }
+    
+    .eda-content.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .data-quality-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .quality-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+      transition: transform 0.2s;
+    }
+    
+    .quality-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .quality-card h4 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+    }
+    
+    .quality-value {
+      font-size: 2em;
+      font-weight: bold;
+      color: #2d3748;
+    }
+    
+    .quality-status {
+      margin-top: 10px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      display: inline-block;
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+    
+    .quality-status.good { background: #c6f6d5; color: #22543d; }
+    .quality-status.warning { background: #feebc8; color: #7c2d12; }
+    .quality-status.bad { background: #fed7d7; color: #742a2a; }
+    
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 15px 0;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .data-table th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .data-table tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      animation: fadeIn 0.3s;
+    }
+    
+    .modal-content {
+      background: white;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 600px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e9ecef;
+    }
+    
+    .modal-header h3 {
+      color: #667eea;
+      margin: 0;
+    }
+    
+    .close-modal {
+      font-size: 2em;
+      cursor: pointer;
+      color: #6c757d;
+      transition: color 0.2s;
+    }
+    
+    .close-modal:hover {
+      color: #dc3545;
+    }
+    
+    .option-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      border-left: 4px solid #667eea;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .option-card:hover {
+      background: #e9ecef;
+      transform: translateX(5px);
+    }
+    
+    .option-card.selected {
+      background: #e7f3ff;
+      border-left-color: #3182ce;
+    }
+    
+    .recommendation-badge {
+      background: #48bb78;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      margin-left: 10px;
+    }
+    
     @media (max-width: 768px) {
       .main-content {
         grid-template-columns: 1fr;
+      }
+      .modal-content {
+        width: 95%;
+        margin: 10% auto;
       }
     }
   </style>
@@ -287,23 +518,63 @@
     </div>
     
     <div class="main-content">
-      <!-- Data Loading & EDA -->
-      <div class="section">
-        <h2>📊 Step 1: Data Selection & EDA</h2>
+      <!-- Data Loading & Comprehensive EDA -->
+      <div class="section full-width">
+        <h2>📊 Step 1: Data Selection & Comprehensive EDA</h2>
         <div class="file-upload">
           <label>Upload Customer Dataset (CSV)</label>
           <input type="file" id="dataFile" accept=".csv">
         </div>
         <button id="loadDataBtn">Load & Analyze Data</button>
         
-        <div id="edaResults"></div>
+        <!-- Quick Overview -->
+        <div id="quickOverview"></div>
+        
+        <!-- EDA Tabs -->
+        <div class="eda-tabs" id="edaTabs" style="display: none;">
+          <button class="eda-tab active" onclick="showEDATab('dataQuality')">🔍 Data Quality</button>
+          <button class="eda-tab" onclick="showEDATab('numerical')">📊 Numerical Analysis</button>
+          <button class="eda-tab" onclick="showEDATab('categorical')">📁 Categorical Analysis</button>
+          <button class="eda-tab" onclick="showEDATab('correlations')">🔗 Correlations</button>
+          <button class="eda-tab" onclick="showEDATab('churnAnalysis')">🎯 Churn Analysis</button>
+        </div>
+        
+        <!-- Data Quality Tab -->
+        <div id="dataQuality" class="eda-content active eda-section">
+          <h3>🔍 Data Quality Assessment</h3>
+          <div id="dataQualityContent"></div>
+        </div>
+        
+        <!-- Numerical Analysis Tab -->
+        <div id="numerical" class="eda-content eda-section">
+          <h3>📊 Numerical Variables Analysis</h3>
+          <div id="numericalContent"></div>
+        </div>
+        
+        <!-- Categorical Analysis Tab -->
+        <div id="categorical" class="eda-content eda-section">
+          <h3>📁 Categorical Variables Analysis</h3>
+          <div id="categoricalContent"></div>
+        </div>
+        
+        <!-- Correlations Tab -->
+        <div id="correlations" class="eda-content eda-section">
+          <h3>🔗 Feature Correlations</h3>
+          <div id="correlationsContent"></div>
+        </div>
+        
+        <!-- Churn Analysis Tab -->
+        <div id="churnAnalysis" class="eda-content eda-section">
+          <h3>🎯 Target Variable (Churn) Analysis</h3>
+          <div id="churnAnalysisContent"></div>
+        </div>
       </div>
       
       <!-- Model Training -->
       <div class="section">
         <h2>🧠 Step 2: Neural Network Training</h2>
         <div class="status-box">
-          <strong>Model:</strong> Deep Neural Network with Dropout & Batch Normalization<br>
+          <strong>Model:</strong> Deep Neural Network with Dropout & Regularization<br>
           <strong>Technique:</strong> Multi-layer perceptron optimized for imbalanced data
         </div>
         <button id="trainBtn" disabled>Train Churn Prediction Model</button>
@@ -313,9 +584,9 @@
       </div>
       
       <!-- Real-time Prediction -->
-      <div class="section full-width">
+      <div class="section">
         <h2>🔮 Step 3: Real-Time Churn Prediction</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin: 15px 0;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
           <div>
             <label>Tenure (months):</label>
             <input type="number" id="tenure" value="12" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
@@ -362,6 +633,28 @@
           <canvas id="metricsChart"></canvas>
         </div>
       </div>
+    </div>
+  </div>
+  
+  <!-- Modal for Missing Values -->
+  <div id="missingValuesModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Handle Missing Values</h3>
+        <span class="close-modal" onclick="closeModal('missingValuesModal')">&times;</span>
+      </div>
+      <div id="missingValuesOptions"></div>
+    </div>
+  </div>
+  
+  <!-- Modal for Duplicates -->
+  <div id="duplicatesModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Handle Duplicate Records</h3>
+        <span class="close-modal" onclick="closeModal('duplicatesModal')">&times;</span>
+      </div>
+      <div id="duplicatesOptions"></div>
     </div>
   </div>
   
