@@ -56,16 +56,25 @@ window.onclick = function(event) {
    ======================================================================== */
 
 $('loadDataBtn').onclick = async () => {
+  console.log('Button clicked!');
   const file = $('dataFile').files[0];
+  
   if (!file) {
     alert('Please select a CSV file');
+    log('No file selected', 'error');
     return;
   }
   
+  log('Starting data load...', 'info');
+  
   try {
-    log('Loading customer data...', 'info');
+    log('Reading file...', 'info');
     const text = await file.text();
+    console.log('File read, length:', text.length);
+    
+    log('Parsing CSV...', 'info');
     rawData = parseCSV(text);
+    console.log('Parsed rows:', rawData.length);
     
     if (rawData.length === 0) {
       throw new Error('No data found in CSV');
@@ -77,9 +86,11 @@ $('loadDataBtn').onclick = async () => {
     $('edaTabs').style.display = 'flex';
     
     // Perform comprehensive EDA
+    log('Starting EDA...', 'info');
     performComprehensiveEDA();
     
     // Process data for training
+    log('Preprocessing data...', 'info');
     processedData = preprocessData(rawData);
     
     log('✓ Data preprocessing complete', 'success');
@@ -91,55 +102,64 @@ $('loadDataBtn').onclick = async () => {
   } catch (error) {
     log(`Error: ${error.message}`, 'error');
     alert('Error loading data: ' + error.message);
-    console.error(error);
+    console.error('Full error:', error);
   }
 };
 
 function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-  
-  const data = [];
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-    if (values.length !== headers.length) continue;
+  try {
+    const lines = text.trim().split('\n');
+    console.log('Total lines:', lines.length);
     
-    const row = {};
-    headers.forEach((header, idx) => {
-      row[header] = values[idx];
-    });
-    data.push(row);
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    console.log('Headers:', headers);
+    
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+      if (values.length !== headers.length) continue;
+      
+      const row = {};
+      headers.forEach((header, idx) => {
+        row[header] = values[idx];
+      });
+      data.push(row);
+    }
+    
+    console.log('Parsed data rows:', data.length);
+    return data;
+  } catch (error) {
+    console.error('Parse error:', error);
+    throw error;
   }
-  
-  return data;
 }
 
 function performComprehensiveEDA() {
   log('Performing Comprehensive Exploratory Data Analysis...', 'info');
   
   try {
-    // 1. Quick Overview
     displayQuickOverview();
+    log('✓ Quick overview complete', 'success');
     
-    // 2. Data Quality Assessment
     assessDataQuality();
+    log('✓ Data quality assessed', 'success');
     
-    // 3. Numerical Analysis
     analyzeNumericalVariables();
+    log('✓ Numerical analysis complete', 'success');
     
-    // 4. Categorical Analysis
     analyzeCategoricalVariables();
+    log('✓ Categorical analysis complete', 'success');
     
-    // 5. Correlation Analysis
     analyzeCorrelations();
+    log('✓ Correlation analysis complete', 'success');
     
-    // 6. Churn Analysis
     analyzeChurnPatterns();
+    log('✓ Churn analysis complete', 'success');
     
     log('✓ Comprehensive EDA complete', 'success');
   } catch (error) {
     log(`EDA Error: ${error.message}`, 'error');
-    console.error(error);
+    console.error('EDA Error:', error);
   }
 }
 
@@ -155,12 +175,19 @@ function displayQuickOverview() {
   const churnCount = rawData.filter(r => r.Churn === 'Yes' || r.Churn === '1').length;
   const churnRate = (churnCount / numRows * 100).toFixed(2);
   
+  // Calculate averages
+  const tenures = rawData.map(r => parseFloat(r.tenure || 0)).filter(v => !isNaN(v));
+  const avgTenure = tenures.length > 0 ? (tenures.reduce((a, b) => a + b, 0) / tenures.length).toFixed(1) : 0;
+  
+  const monthlyCharges = rawData.map(r => parseFloat(r.MonthlyCharges || 0)).filter(v => !isNaN(v));
+  const avgMonthly = monthlyCharges.length > 0 ? (monthlyCharges.reduce((a, b) => a + b, 0) / monthlyCharges.length).toFixed(2) : 0;
+  
   stats = {
     totalCustomers: numRows,
     churnCount,
     churnRate,
-    avgTenure: 0,
-    avgMonthly: 0,
+    avgTenure,
+    avgMonthly,
     avgTotal: 0
   };
   
@@ -182,6 +209,12 @@ function displayQuickOverview() {
         <div class="metric-value">${churnCount.toLocaleString()}</div>
         <div class="metric-label">At-Risk Customers</div>
       </div>
+    </div>
+    <div class="status-box success">
+      <strong>Key Insights:</strong><br>
+      • ${churnCount} customers at risk of churning<br>
+      • Potential revenue loss: $${(churnCount * avgMonthly * 12).toFixed(0)}/year<br>
+      • Average tenure: ${avgTenure} months | Average monthly charge: $${avgMonthly}
     </div>
   `;
   
@@ -323,21 +356,18 @@ window.showMissingValuesDetails = function() {
     <div class="option-card" onclick="handleMissingValues('drop')">
       <h4>🗑️ Drop Rows with Missing Values <span class="recommendation-badge">Best for <5% missing</span></h4>
       <p><strong>When to use:</strong> When missing data is minimal (< 5%) and randomly distributed</p>
-      <p><strong>Impact:</strong> Will remove rows with any missing values</p>
       <p><strong>Pros:</strong> Clean data, no assumptions made</p>
       <p><strong>Cons:</strong> Loss of data, reduces sample size</p>
     </div>
     <div class="option-card" onclick="handleMissingValues('mean')">
       <h4>📊 Fill with Mean/Median <span class="recommendation-badge">Recommended</span></h4>
       <p><strong>When to use:</strong> For numerical columns with missing values</p>
-      <p><strong>Impact:</strong> Preserves all rows, maintains distribution</p>
       <p><strong>Pros:</strong> No data loss, statistically sound</p>
       <p><strong>Cons:</strong> May slightly reduce variance</p>
     </div>
     <div class="option-card" onclick="handleMissingValues('mode')">
       <h4>📁 Fill with Most Frequent Value (Mode)</h4>
       <p><strong>When to use:</strong> For categorical columns with missing values</p>
-      <p><strong>Impact:</strong> Preserves all rows, uses most common category</p>
       <p><strong>Pros:</strong> No data loss, maintains majority patterns</p>
       <p><strong>Cons:</strong> May introduce bias toward dominant category</p>
     </div>
@@ -397,6 +427,7 @@ window.handleMissingValues = function(method) {
     closeModal('missingValuesModal');
     assessDataQuality();
     displayQuickOverview();
+    performComprehensiveEDA();
   } catch (error) {
     log(`Error handling missing values: ${error.message}`, 'error');
     console.error(error);
@@ -418,14 +449,11 @@ window.showDuplicatesDetails = function() {
       <p><strong>When to use:</strong> When duplicates are data entry errors</p>
       <p><strong>Impact:</strong> Will remove ${dataQualityInfo.duplicates} duplicate rows</p>
       <p><strong>Pros:</strong> Clean dataset, no redundancy</p>
-      <p><strong>Cons:</strong> May lose valid repeated observations</p>
     </div>
     <div class="option-card" onclick="handleDuplicates('keep')">
       <h4>✅ Keep All Duplicates</h4>
       <p><strong>When to use:</strong> When duplicates are valid repeated observations</p>
-      <p><strong>Impact:</strong> No changes to dataset</p>
       <p><strong>Pros:</strong> No data loss</p>
-      <p><strong>Cons:</strong> May introduce bias in analysis</p>
     </div>
   `;
   
@@ -454,6 +482,7 @@ window.handleDuplicates = function(method) {
     closeModal('duplicatesModal');
     assessDataQuality();
     displayQuickOverview();
+    performComprehensiveEDA();
   } catch (error) {
     log(`Error handling duplicates: ${error.message}`, 'error');
     console.error(error);
@@ -506,7 +535,6 @@ function analyzeNumericalVariables() {
   
   html += '</div>';
   
-  // Create distribution charts
   html += '<div style="margin-top: 30px;"><h4>Distribution Analysis:</h4></div>';
   html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 15px;">';
   
@@ -534,6 +562,7 @@ function createDistributionChart(column, canvasId) {
   if (!canvas) return;
   
   const values = rawData.map(r => parseFloat(r[column])).filter(v => !isNaN(v));
+  if (values.length === 0) return;
   
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -545,7 +574,7 @@ function createDistributionChart(column, canvasId) {
   for (let i = 0; i < binCount; i++) {
     const binStart = min + i * binSize;
     const binEnd = binStart + binSize;
-    labels.push(`${binStart.toFixed(0)}-${binEnd.toFixed(0)}`);
+    labels.push(`${binStart.toFixed(0)}`);
   }
   
   values.forEach(v => {
@@ -582,9 +611,6 @@ function createDistributionChart(column, canvasId) {
         y: {
           beginAtZero: true,
           title: { display: true, text: 'Frequency' }
-        },
-        x: {
-          title: { display: true, text: column }
         }
       }
     }
@@ -710,36 +736,4 @@ function createCategoricalChart(column, canvasId) {
    ======================================================================== */
 
 function analyzeCorrelations() {
-  let html = '<div class="status-box"><strong>📊 Correlation Analysis</strong><br>Shows relationships between numerical variables</div>';
-  
-  html += '<div style="margin-top: 20px;"><p>Correlation analysis shows that Tenure and TotalCharges have strong positive correlation (0.826), indicating customers who stay longer accumulate higher total charges. Monthly Charges shows moderate correlation with both variables.</p></div>';
-  
-  html += '<div class="chart-container" style="height: 300px; margin-top: 20px;"><canvas id="corrChart"></canvas></div>';
-  
-  $('correlationsContent').innerHTML = html;
-  
-  setTimeout(() => createCorrelationChart(), 100);
-}
-
-function createCorrelationChart() {
-  const canvas = $('corrChart');
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-  if (charts.corrChart) charts.corrChart.destroy();
-  
-  charts.corrChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Tenure ↔ Monthly', 'Tenure ↔ Total', 'Monthly ↔ Total'],
-      datasets: [{
-        label: 'Correlation Strength',
-        data: [0.25, 0.826, 0.651],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.7)',
-          'rgba(255, 99, 132, 0.7)',
-          'rgba(255, 206, 86, 0.7)'
-        ],
-        borderColor: [
-          'rgba(75, 192, 192, 1)',
-          'rgba(255, 99, 132, 1)',
+  let html = '<div class="status-box"><strong>📊 Correlation Analysis</strong><br
