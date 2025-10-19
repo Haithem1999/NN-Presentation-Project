@@ -829,7 +829,7 @@ function analyzeChurnPatterns() {
   html += '<div class="status-box warning" style="margin-top: 20px;">';
   html += '<strong>Business Impact:</strong><br>';
   html += '• ' + churnYes.length + ' customers at risk of leaving<br>';
-  html += '• Estimated revenue loss:';
+  html += '• Estimated revenue loss: 
 
 function createChurnChart() {
   const canvas = $('churnChart');
