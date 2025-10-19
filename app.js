@@ -213,6 +213,8 @@ function performComprehensiveEDA() {
 
   log('✓ EDA complete', 'success');
 }
+// Ensure global visibility in case of scope issues
+window.performComprehensiveEDA = performComprehensiveEDA;
 
 function analyzeDataQuality() {
   const totalRows = rawData.length;
@@ -417,12 +419,13 @@ function renderNumericalChart(colName) {
   
   const ctx = canvas.getContext('2d');
   const values = rawData.map(row => parseFloat(row[colName])).filter(v => !isNaN(v));
+  if (values.length === 0) return;
   
   // Create histogram
   const bins = 15;
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const binSize = (max - min) / bins;
+  const binSize = (max - min) / bins || 1;
   
   const histogram = new Array(bins).fill(0);
   const labels = [];
@@ -474,12 +477,6 @@ function analyzeCategoricalVariables() {
   
   // Show statistics for first 3 categorical variables
   categoricalCols.slice(0, 3).forEach(col => {
-    const valueCounts = {};
-    rawData.forEach(row => {
-      const val = row[col];
-      valueCounts[val] = (valueCounts[val] || 0) + 1;
-    });
-    
     html += `
       <div style="margin: 20px 0;">
         <h4 style="color: #667eea;">${col}</h4>
@@ -754,6 +751,7 @@ function identifyCategoricalColumns() {
 }
 
 function calculateStats(values) {
+  if (values.length === 0) return {mean:0, median:0, std:0, min:0, max:0};
   const sorted = [...values].sort((a, b) => a - b);
   const mean = values.reduce((a, b) => a + b, 0) / values.length;
   const median = sorted[Math.floor(sorted.length / 2)];
@@ -784,7 +782,7 @@ function calculateCorrelation(x, y) {
     denY += dy * dy;
   }
   
-  return num / Math.sqrt(denX * denY);
+  return num / Math.sqrt(denX * denY || 1);
 }
 
 /* ========================================================================
@@ -827,7 +825,7 @@ function preprocessData(data) {
   const trainLabels = labels.slice(0, splitIndex);
   const testLabels = labels.slice(splitIndex);
 
-  // Normalize features
+  // Normalize features (standardization)
   const scaler = fitScaler(trainFeatures);
   const trainFeaturesNorm = transform(trainFeatures, scaler);
   const testFeaturesNorm = transform(testFeatures, scaler);
@@ -1595,7 +1593,7 @@ async function init() {
     log('✓ TensorFlow.js initialized with WebGL backend', 'success');
     log('System ready. Upload data to begin.', 'info');
     log('Enhanced model targets 93-95% accuracy', 'info');
-  } catch (error) {
+  } catch (err) {
     await tf.setBackend('cpu');
     log('⚠️ Using CPU backend (WebGL unavailable)', 'warning');
     log('System ready. Upload data to begin.', 'info');
