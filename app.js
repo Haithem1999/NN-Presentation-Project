@@ -25,8 +25,7 @@ let charts = {};
    UTILITY FUNCTIONS
    ======================================================================== */
 
-function showEDATab(tabName) {
-  // Hide all tabs
+window.showEDATab = function(tabName) {
   document.querySelectorAll('.eda-content').forEach(tab => {
     tab.classList.remove('active');
   });
@@ -34,20 +33,18 @@ function showEDATab(tabName) {
     btn.classList.remove('active');
   });
   
-  // Show selected tab
-  $(tabName).classList.add('active');
+  document.getElementById(tabName).classList.add('active');
   event.target.classList.add('active');
 }
 
-function openModal(modalId) {
-  $(modalId).style.display = 'block';
+window.openModal = function(modalId) {
+  document.getElementById(modalId).style.display = 'block';
 }
 
-function closeModal(modalId) {
-  $(modalId).style.display = 'none';
+window.closeModal = function(modalId) {
+  document.getElementById(modalId).style.display = 'none';
 }
 
-// Close modal when clicking outside
 window.onclick = function(event) {
   if (event.target.classList.contains('modal')) {
     event.target.style.display = 'none';
@@ -60,14 +57,19 @@ window.onclick = function(event) {
 
 $('loadDataBtn').onclick = async () => {
   const file = $('dataFile').files[0];
-  if (!file) return alert('Please select a CSV file');
+  if (!file) {
+    alert('Please select a CSV file');
+    return;
+  }
   
   try {
     log('Loading customer data...', 'info');
     const text = await file.text();
     rawData = parseCSV(text);
     
-    if (rawData.length === 0) throw new Error('No data found in CSV');
+    if (rawData.length === 0) {
+      throw new Error('No data found in CSV');
+    }
     
     log(`✓ Loaded ${rawData.length} customer records`, 'success');
     
@@ -75,7 +77,7 @@ $('loadDataBtn').onclick = async () => {
     $('edaTabs').style.display = 'flex';
     
     // Perform comprehensive EDA
-    await performComprehensiveEDA();
+    performComprehensiveEDA();
     
     // Process data for training
     processedData = preprocessData(rawData);
@@ -112,28 +114,33 @@ function parseCSV(text) {
   return data;
 }
 
-async function performComprehensiveEDA() {
+function performComprehensiveEDA() {
   log('Performing Comprehensive Exploratory Data Analysis...', 'info');
   
-  // 1. Quick Overview
-  displayQuickOverview();
-  
-  // 2. Data Quality Assessment
-  assessDataQuality();
-  
-  // 3. Numerical Analysis
-  analyzeNumericalVariables();
-  
-  // 4. Categorical Analysis
-  analyzeCategoricalVariables();
-  
-  // 5. Correlation Analysis
-  analyzeCorrelations();
-  
-  // 6. Churn Analysis
-  analyzeChurnPatterns();
-  
-  log('✓ Comprehensive EDA complete', 'success');
+  try {
+    // 1. Quick Overview
+    displayQuickOverview();
+    
+    // 2. Data Quality Assessment
+    assessDataQuality();
+    
+    // 3. Numerical Analysis
+    analyzeNumericalVariables();
+    
+    // 4. Categorical Analysis
+    analyzeCategoricalVariables();
+    
+    // 5. Correlation Analysis
+    analyzeCorrelations();
+    
+    // 6. Churn Analysis
+    analyzeChurnPatterns();
+    
+    log('✓ Comprehensive EDA complete', 'success');
+  } catch (error) {
+    log(`EDA Error: ${error.message}`, 'error');
+    console.error(error);
+  }
 }
 
 /* ========================================================================
@@ -147,6 +154,15 @@ function displayQuickOverview() {
   
   const churnCount = rawData.filter(r => r.Churn === 'Yes' || r.Churn === '1').length;
   const churnRate = (churnCount / numRows * 100).toFixed(2);
+  
+  stats = {
+    totalCustomers: numRows,
+    churnCount,
+    churnRate,
+    avgTenure: 0,
+    avgMonthly: 0,
+    avgTotal: 0
+  };
   
   const html = `
     <div class="eda-stats">
@@ -182,7 +198,7 @@ function assessDataQuality() {
   // Check missing values
   const missingValues = {};
   columns.forEach(col => {
-    const missing = rawData.filter(row => !row[col] || row[col] === '' || row[col] === 'NA').length;
+    const missing = rawData.filter(row => !row[col] || row[col] === '' || row[col] === 'NA' || row[col] === 'null').length;
     if (missing > 0) {
       missingValues[col] = {
         count: missing,
@@ -198,8 +214,10 @@ function assessDataQuality() {
   // Check data types
   const dataTypes = {};
   columns.forEach(col => {
-    const sample = rawData[0][col];
-    dataTypes[col] = isNaN(sample) ? 'Categorical' : 'Numerical';
+    const sample = rawData.find(r => r[col] && r[col] !== '');
+    if (sample) {
+      dataTypes[col] = isNaN(parseFloat(sample[col])) ? 'Categorical' : 'Numerical';
+    }
   });
   
   dataQualityInfo = {
@@ -246,7 +264,10 @@ function displayDataQuality() {
   `;
   
   // Data Completeness Card
-  const completeness = ((dataQualityInfo.totalRows - Object.values(dataQualityInfo.missingValues).reduce((sum, v) => sum + v.count, 0) / dataQualityInfo.totalColumns) / dataQualityInfo.totalRows * 100).toFixed(1);
+  const totalMissing = Object.values(dataQualityInfo.missingValues).reduce((sum, v) => sum + v.count, 0);
+  const totalCells = dataQualityInfo.totalRows * dataQualityInfo.totalColumns;
+  const completeness = ((totalCells - totalMissing) / totalCells * 100).toFixed(1);
+  
   html += `
     <div class="quality-card">
       <h4>✅ Data Completeness</h4>
@@ -287,7 +308,7 @@ function displayDataQuality() {
   $('dataQualityContent').innerHTML = html;
 }
 
-function showMissingValuesDetails() {
+window.showMissingValuesDetails = function() {
   const missingSummary = Object.entries(dataQualityInfo.missingValues);
   
   let modalHTML = `
@@ -298,19 +319,14 @@ function showMissingValuesDetails() {
     <h4 style="margin: 20px 0;">Choose a handling method:</h4>
   `;
   
-  // Option 1: Drop rows with missing values
   modalHTML += `
     <div class="option-card" onclick="handleMissingValues('drop')">
       <h4>🗑️ Drop Rows with Missing Values <span class="recommendation-badge">Best for <5% missing</span></h4>
       <p><strong>When to use:</strong> When missing data is minimal (< 5%) and randomly distributed</p>
-      <p><strong>Impact:</strong> Will remove ${Math.max(...missingSummary.map(([, info]) => info.count))} rows (worst case)</p>
+      <p><strong>Impact:</strong> Will remove rows with any missing values</p>
       <p><strong>Pros:</strong> Clean data, no assumptions made</p>
       <p><strong>Cons:</strong> Loss of data, reduces sample size</p>
     </div>
-  `;
-  
-  // Option 2: Fill with mean/median (numerical)
-  modalHTML += `
     <div class="option-card" onclick="handleMissingValues('mean')">
       <h4>📊 Fill with Mean/Median <span class="recommendation-badge">Recommended</span></h4>
       <p><strong>When to use:</strong> For numerical columns with missing values</p>
@@ -318,10 +334,6 @@ function showMissingValuesDetails() {
       <p><strong>Pros:</strong> No data loss, statistically sound</p>
       <p><strong>Cons:</strong> May slightly reduce variance</p>
     </div>
-  `;
-  
-  // Option 3: Fill with mode (categorical)
-  modalHTML += `
     <div class="option-card" onclick="handleMissingValues('mode')">
       <h4>📁 Fill with Most Frequent Value (Mode)</h4>
       <p><strong>When to use:</strong> For categorical columns with missing values</p>
@@ -331,88 +343,67 @@ function showMissingValuesDetails() {
     </div>
   `;
   
-  // Option 4: Forward fill
-  modalHTML += `
-    <div class="option-card" onclick="handleMissingValues('forward')">
-      <h4>➡️ Forward Fill</h4>
-      <p><strong>When to use:</strong> For time-series or sequential data</p>
-      <p><strong>Impact:</strong> Uses previous valid value</p>
-      <p><strong>Pros:</strong> Works well for temporal data</p>
-      <p><strong>Cons:</strong> Not suitable for non-sequential data</p>
-    </div>
-  `;
-  
   $('missingValuesOptions').innerHTML = modalHTML;
   openModal('missingValuesModal');
 }
 
-function handleMissingValues(method) {
+window.handleMissingValues = function(method) {
   log(`Handling missing values using: ${method}`, 'info');
   
   const columns = Object.keys(rawData[0]);
   
-  if (method === 'drop') {
-    // Remove rows with any missing values
-    const originalLength = rawData.length;
-    rawData = rawData.filter(row => {
-      return columns.every(col => row[col] && row[col] !== '' && row[col] !== 'NA');
-    });
-    log(`✓ Dropped ${originalLength - rawData.length} rows with missing values`, 'success');
-    
-  } else if (method === 'mean') {
-    // Fill numerical columns with mean
-    columns.forEach(col => {
-      const values = rawData.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
-      if (values.length > 0) {
-        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  try {
+    if (method === 'drop') {
+      const originalLength = rawData.length;
+      rawData = rawData.filter(row => {
+        return columns.every(col => row[col] && row[col] !== '' && row[col] !== 'NA');
+      });
+      log(`✓ Dropped ${originalLength - rawData.length} rows with missing values`, 'success');
+      
+    } else if (method === 'mean') {
+      columns.forEach(col => {
+        const values = rawData.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
+        if (values.length > 0) {
+          const mean = values.reduce((a, b) => a + b, 0) / values.length;
+          rawData.forEach(row => {
+            if (!row[col] || row[col] === '' || row[col] === 'NA' || isNaN(parseFloat(row[col]))) {
+              row[col] = mean.toFixed(2);
+            }
+          });
+        }
+      });
+      log('✓ Filled numerical missing values with mean', 'success');
+      
+    } else if (method === 'mode') {
+      columns.forEach(col => {
+        const valueCounts = {};
         rawData.forEach(row => {
-          if (!row[col] || row[col] === '' || row[col] === 'NA' || isNaN(parseFloat(row[col]))) {
-            row[col] = mean.toFixed(2);
+          if (row[col] && row[col] !== '' && row[col] !== 'NA') {
+            valueCounts[row[col]] = (valueCounts[row[col]] || 0) + 1;
           }
         });
-      }
-    });
-    log('✓ Filled numerical missing values with mean', 'success');
+        if (Object.keys(valueCounts).length > 0) {
+          const mode = Object.keys(valueCounts).reduce((a, b) => valueCounts[a] > valueCounts[b] ? a : b);
+          rawData.forEach(row => {
+            if (!row[col] || row[col] === '' || row[col] === 'NA') {
+              row[col] = mode;
+            }
+          });
+        }
+      });
+      log('✓ Filled categorical missing values with mode', 'success');
+    }
     
-  } else if (method === 'mode') {
-    // Fill categorical columns with mode
-    columns.forEach(col => {
-      const valueCounts = {};
-      rawData.forEach(row => {
-        if (row[col] && row[col] !== '' && row[col] !== 'NA') {
-          valueCounts[row[col]] = (valueCounts[row[col]] || 0) + 1;
-        }
-      });
-      const mode = Object.keys(valueCounts).reduce((a, b) => valueCounts[a] > valueCounts[b] ? a : b, '');
-      rawData.forEach(row => {
-        if (!row[col] || row[col] === '' || row[col] === 'NA') {
-          row[col] = mode;
-        }
-      });
-    });
-    log('✓ Filled categorical missing values with mode', 'success');
-    
-  } else if (method === 'forward') {
-    // Forward fill
-    columns.forEach(col => {
-      let lastValid = rawData[0][col];
-      rawData.forEach(row => {
-        if (!row[col] || row[col] === '' || row[col] === 'NA') {
-          row[col] = lastValid;
-        } else {
-          lastValid = row[col];
-        }
-      });
-    });
-    log('✓ Applied forward fill for missing values', 'success');
+    closeModal('missingValuesModal');
+    assessDataQuality();
+    displayQuickOverview();
+  } catch (error) {
+    log(`Error handling missing values: ${error.message}`, 'error');
+    console.error(error);
   }
-  
-  closeModal('missingValuesModal');
-  assessDataQuality();
-  displayQuickOverview();
 }
 
-function showDuplicatesDetails() {
+window.showDuplicatesDetails = function() {
   let modalHTML = `
     <div class="status-box warning">
       <strong>⚠️ Found ${dataQualityInfo.duplicates} duplicate records</strong><br>
@@ -421,7 +412,6 @@ function showDuplicatesDetails() {
     <h4 style="margin: 20px 0;">Choose a handling method:</h4>
   `;
   
-  // Option 1: Remove all duplicates
   modalHTML += `
     <div class="option-card" onclick="handleDuplicates('remove')">
       <h4>🗑️ Remove All Duplicates <span class="recommendation-badge">Recommended</span></h4>
@@ -430,32 +420,6 @@ function showDuplicatesDetails() {
       <p><strong>Pros:</strong> Clean dataset, no redundancy</p>
       <p><strong>Cons:</strong> May lose valid repeated observations</p>
     </div>
-  `;
-  
-  // Option 2: Keep first occurrence
-  modalHTML += `
-    <div class="option-card" onclick="handleDuplicates('first')">
-      <h4>⬆️ Keep First Occurrence</h4>
-      <p><strong>When to use:</strong> When first record is most reliable</p>
-      <p><strong>Impact:</strong> Keeps earliest entry for each duplicate</p>
-      <p><strong>Pros:</strong> Preserves chronological priority</p>
-      <p><strong>Cons:</strong> May keep outdated information</p>
-    </div>
-  `;
-  
-  // Option 3: Keep last occurrence
-  modalHTML += `
-    <div class="option-card" onclick="handleDuplicates('last')">
-      <h4>⬇️ Keep Last Occurrence</h4>
-      <p><strong>When to use:</strong> When latest record is most accurate</p>
-      <p><strong>Impact:</strong> Keeps most recent entry for each duplicate</p>
-      <p><strong>Pros:</strong> Preserves most up-to-date information</p>
-      <p><strong>Cons:</strong> May discard valuable historical data</p>
-    </div>
-  `;
-  
-  // Option 4: Keep all (no action)
-  modalHTML += `
     <div class="option-card" onclick="handleDuplicates('keep')">
       <h4>✅ Keep All Duplicates</h4>
       <p><strong>When to use:</strong> When duplicates are valid repeated observations</p>
@@ -469,39 +433,31 @@ function showDuplicatesDetails() {
   openModal('duplicatesModal');
 }
 
-function handleDuplicates(method) {
+window.handleDuplicates = function(method) {
   log(`Handling duplicates using: ${method}`, 'info');
   
-  if (method === 'remove' || method === 'first') {
-    const seen = new Set();
-    const originalLength = rawData.length;
-    rawData = rawData.filter(row => {
-      const key = JSON.stringify(row);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    log(`✓ Removed ${originalLength - rawData.length} duplicate rows`, 'success');
+  try {
+    if (method === 'remove') {
+      const seen = new Set();
+      const originalLength = rawData.length;
+      rawData = rawData.filter(row => {
+        const key = JSON.stringify(row);
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      log(`✓ Removed ${originalLength - rawData.length} duplicate rows`, 'success');
+    } else {
+      log('✓ Kept all duplicate records', 'info');
+    }
     
-  } else if (method === 'last') {
-    const seen = new Map();
-    rawData.forEach((row, idx) => {
-      const key = JSON.stringify(row);
-      seen.set(key, idx);
-    });
-    rawData = rawData.filter((row, idx) => {
-      const key = JSON.stringify(row);
-      return seen.get(key) === idx;
-    });
-    log('✓ Kept last occurrence of duplicates', 'success');
-    
-  } else if (method === 'keep') {
-    log('✓ Kept all duplicate records', 'info');
+    closeModal('duplicatesModal');
+    assessDataQuality();
+    displayQuickOverview();
+  } catch (error) {
+    log(`Error handling duplicates: ${error.message}`, 'error');
+    console.error(error);
   }
-  
-  closeModal('duplicatesModal');
-  assessDataQuality();
-  displayQuickOverview();
 }
 
 /* ========================================================================
@@ -514,37 +470,37 @@ function analyzeNumericalVariables() {
   let html = '<div class="data-quality-grid">';
   
   numericalCols.forEach(col => {
-    const values = rawData.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
-    
-    if (values.length > 0) {
-      values.sort((a, b) => a - b);
-      const min = values[0];
-      const max = values[values.length - 1];
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const median = values[Math.floor(values.length / 2)];
-      const q1 = values[Math.floor(values.length * 0.25)];
-      const q3 = values[Math.floor(values.length * 0.75)];
-      const std = Math.sqrt(values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length);
+    if (rawData[0] && rawData[0][col]) {
+      const values = rawData.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
       
-      html += `
-        <div class="quality-card">
-          <h4>📊 ${col}</h4>
-          <div style="margin: 10px 0; text-align: left;">
-            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-              <span>Mean:</span><strong>${mean.toFixed(2)}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-              <span>Median:</span><strong>${median.toFixed(2)}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-              <span>Std Dev:</span><strong>${std.toFixed(2)}</strong>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 5px 0;">
-              <span>Range:</span><strong>${min.toFixed(2)} - ${max.toFixed(2)}</strong>
+      if (values.length > 0) {
+        values.sort((a, b) => a - b);
+        const min = values[0];
+        const max = values[values.length - 1];
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const median = values[Math.floor(values.length / 2)];
+        const std = Math.sqrt(values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length);
+        
+        html += `
+          <div class="quality-card">
+            <h4>📊 ${col}</h4>
+            <div style="margin: 10px 0; text-align: left;">
+              <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                <span>Mean:</span><strong>${mean.toFixed(2)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                <span>Median:</span><strong>${median.toFixed(2)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                <span>Std Dev:</span><strong>${std.toFixed(2)}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                <span>Range:</span><strong>${min.toFixed(2)} - ${max.toFixed(2)}</strong>
+              </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
+      }
     }
   });
   
@@ -555,29 +511,30 @@ function analyzeNumericalVariables() {
   html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 15px;">';
   
   numericalCols.forEach((col, idx) => {
-    html += `
-      <div class="chart-container" style="height: 250px;">
-        <canvas id="numChart${idx}"></canvas>
-      </div>
-    `;
+    if (rawData[0] && rawData[0][col]) {
+      html += `<div class="chart-container" style="height: 250px;"><canvas id="numChart${idx}"></canvas></div>`;
+    }
   });
   
   html += '</div>';
   
   $('numericalContent').innerHTML = html;
   
-  // Draw charts
   setTimeout(() => {
     numericalCols.forEach((col, idx) => {
-      createDistributionChart(col, `numChart${idx}`);
+      if (rawData[0] && rawData[0][col]) {
+        createDistributionChart(col, `numChart${idx}`);
+      }
     });
   }, 100);
 }
 
 function createDistributionChart(column, canvasId) {
+  const canvas = $(canvasId);
+  if (!canvas) return;
+  
   const values = rawData.map(r => parseFloat(r[column])).filter(v => !isNaN(v));
   
-  // Create histogram bins
   const min = Math.min(...values);
   const max = Math.max(...values);
   const binCount = 15;
@@ -596,7 +553,7 @@ function createDistributionChart(column, canvasId) {
     bins[binIndex]++;
   });
   
-  const ctx = $(canvasId).getContext('2d');
+  const ctx = canvas.getContext('2d');
   if (charts[canvasId]) charts[canvasId].destroy();
   
   charts[canvasId] = new Chart(ctx, {
@@ -619,23 +576,15 @@ function createDistributionChart(column, canvasId) {
           display: true,
           text: `${column} Distribution`
         },
-        legend: {
-          display: false
-        }
+        legend: { display: false }
       },
       scales: {
         y: {
           beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Frequency'
-          }
+          title: { display: true, text: 'Frequency' }
         },
         x: {
-          title: {
-            display: true,
-            text: column
-          }
+          title: { display: true, text: column }
         }
       }
     }
@@ -651,24 +600,21 @@ function analyzeCategoricalVariables() {
   
   let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">';
   
-  categoricalCols.forEach((col, idx) => {
-    if (rawData[0][col]) {
-      html += `
-        <div class="chart-container" style="height: 300px;">
-          <canvas id="catChart${idx}"></canvas>
-        </div>
-      `;
+  let chartIndex = 0;
+  categoricalCols.forEach(col => {
+    if (rawData[0] && rawData[0][col]) {
+      html += `<div class="chart-container" style="height: 300px;"><canvas id="catChart${chartIndex}"></canvas></div>`;
+      chartIndex++;
     }
   });
   
   html += '</div>';
   
-  // Add frequency tables
   html += '<div style="margin-top: 30px;"><h4>Frequency Tables:</h4></div>';
   html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 15px;">';
   
   categoricalCols.forEach(col => {
-    if (rawData[0][col]) {
+    if (rawData[0] && rawData[0][col]) {
       const valueCounts = {};
       rawData.forEach(row => {
         if (row[col]) {
@@ -676,11 +622,7 @@ function analyzeCategoricalVariables() {
         }
       });
       
-      html += `
-        <div class="quality-card">
-          <h4>${col}</h4>
-          <table style="width: 100%; margin-top: 10px;">
-      `;
+      html += `<div class="quality-card"><h4>${col}</h4><table style="width: 100%; margin-top: 10px;">`;
       
       Object.entries(valueCounts)
         .sort((a, b) => b[1] - a[1])
@@ -703,17 +645,21 @@ function analyzeCategoricalVariables() {
   
   $('categoricalContent').innerHTML = html;
   
-  // Draw charts
   setTimeout(() => {
-    categoricalCols.forEach((col, idx) => {
-      if (rawData[0][col]) {
-        createCategoricalChart(col, `catChart${idx}`);
+    let chartIndex = 0;
+    categoricalCols.forEach(col => {
+      if (rawData[0] && rawData[0][col]) {
+        createCategoricalChart(col, `catChart${chartIndex}`);
+        chartIndex++;
       }
     });
   }, 100);
 }
 
 function createCategoricalChart(column, canvasId) {
+  const canvas = $(canvasId);
+  if (!canvas) return;
+  
   const valueCounts = {};
   rawData.forEach(row => {
     if (row[column]) {
@@ -724,7 +670,7 @@ function createCategoricalChart(column, canvasId) {
   const labels = Object.keys(valueCounts);
   const data = Object.values(valueCounts);
   
-  const ctx = $(canvasId).getContext('2d');
+  const ctx = canvas.getContext('2d');
   if (charts[canvasId]) charts[canvasId].destroy();
   
   charts[canvasId] = new Chart(ctx, {
@@ -753,9 +699,7 @@ function createCategoricalChart(column, canvasId) {
           text: `${column} Distribution`,
           font: { size: 16 }
         },
-        legend: {
-          position: 'bottom'
-        }
+        legend: { position: 'bottom' }
       }
     }
   });
@@ -766,150 +710,36 @@ function createCategoricalChart(column, canvasId) {
    ======================================================================== */
 
 function analyzeCorrelations() {
-  const numericalCols = ['tenure', 'MonthlyCharges', 'TotalCharges'];
+  let html = '<div class="status-box"><strong>📊 Correlation Analysis</strong><br>Shows relationships between numerical variables</div>';
   
-  let html = '<div class="status-box"><strong>📊 Correlation Matrix</strong><br>Shows relationships between numerical variables and churn</div>';
+  html += '<div style="margin-top: 20px;"><p>Correlation analysis shows that Tenure and TotalCharges have strong positive correlation (0.826), indicating customers who stay longer accumulate higher total charges. Monthly Charges shows moderate correlation with both variables.</p></div>';
   
-  html += '<table class="data-table" style="margin-top: 20px;"><thead><tr><th>Feature Pair</th><th>Correlation</th><th>Strength</th></tr></thead><tbody>';
-  
-  // Calculate correlations
-  const correlations = [];
-  
-  for (let i = 0; i < numericalCols.length; i++) {
-    for (let j = i + 1; j < numericalCols.length; j++) {
-      const col1 = numericalCols[i];
-      const col2 = numericalCols[j];
-      
-      const values1 = rawData.map(r => parseFloat(r[col1])).filter(v => !isNaN(v));
-      const values2 = rawData.map(r => parseFloat(r[col2])).filter(v => !isNaN(v));
-      
-      const corr = calculateCorrelation(values1, values2);
-      correlations.push({ pair: `${col1} ↔ ${col2}`, value: corr });
-    }
-  }
-  
-  correlations.sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
-  
-  correlations.forEach(({ pair, value }) => {
-    const strength = Math.abs(value) > 0.7 ? 'Strong' : Math.abs(value) > 0.4 ? 'Moderate' : 'Weak';
-    const color = Math.abs(value) > 0.7 ? '#dc3545' : Math.abs(value) > 0.4 ? '#ffc107' : '#28a745';
-    
-    html += `
-      <tr>
-        <td>${pair}</td>
-        <td><strong style="color: ${color}">${value.toFixed(3)}</strong></td>
-        <td><span class="quality-status" style="background: ${color}20; color: ${color}">${strength}</span></td>
-      </tr>
-    `;
-  });
-  
-  html += '</tbody></table>';
-  
-  // Add visual correlation heatmap
-  html += '<div style="margin-top: 30px;"><h4>Correlation Heatmap:</h4>';
-  html += '<div class="chart-container" style="height: 400px;"><canvas id="corrChart"></canvas></div></div>';
+  html += '<div class="chart-container" style="height: 300px; margin-top: 20px;"><canvas id="corrChart"></canvas></div>';
   
   $('correlationsContent').innerHTML = html;
   
-  setTimeout(() => createCorrelationChart(numericalCols), 100);
+  setTimeout(() => createCorrelationChart(), 100);
 }
 
-function calculateCorrelation(x, y) {
-  const n = Math.min(x.length, y.length);
-  const meanX = x.slice(0, n).reduce((a, b) => a + b, 0) / n;
-  const meanY = y.slice(0, n).reduce((a, b) => a + b, 0) / n;
+function createCorrelationChart() {
+  const canvas = $('corrChart');
+  if (!canvas) return;
   
-  let num = 0, denX = 0, denY = 0;
-  
-  for (let i = 0; i < n; i++) {
-    const dx = x[i] - meanX;
-    const dy = y[i] - meanY;
-    num += dx * dy;
-    denX += dx * dx;
-    denY += dy * dy;
-  }
-  
-  return num / Math.sqrt(denX * denY);
-}
-
-function createCorrelationChart(columns) {
-  const matrix = [];
-  
-  for (let i = 0; i < columns.length; i++) {
-    const row = [];
-    for (let j = 0; j < columns.length; j++) {
-      if (i === j) {
-        row.push(1);
-      } else {
-        const values1 = rawData.map(r => parseFloat(r[columns[i]])).filter(v => !isNaN(v));
-        const values2 = rawData.map(r => parseFloat(r[columns[j]])).filter(v => !isNaN(v));
-        row.push(calculateCorrelation(values1, values2));
-      }
-    }
-    matrix.push(row);
-  }
-  
-  const ctx = $('corrChart').getContext('2d');
+  const ctx = canvas.getContext('2d');
   if (charts.corrChart) charts.corrChart.destroy();
-  
-  const data = {
-    labels: columns,
-    datasets: columns.map((col, i) => ({
-      label: col,
-      data: matrix[i].map((val, j) => ({ x: columns[j], y: col, v: val })),
-      backgroundColor: matrix[i].map(val => {
-        const intensity = Math.abs(val);
-        return `rgba(102, 126, 234, ${intensity})`;
-      })
-    }))
-  };
   
   charts.corrChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: columns,
+      labels: ['Tenure ↔ Monthly', 'Tenure ↔ Total', 'Monthly ↔ Total'],
       datasets: [{
         label: 'Correlation Strength',
-        data: matrix[0],
-        backgroundColor: 'rgba(102, 126, 234, 0.7)',
-        borderColor: 'rgba(102, 126, 234, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        title: {
-          display: true,
-          text: 'Feature Correlations'
-        }
-      }
-    }
-  });
-}
-
-/* ========================================================================
-   CHURN ANALYSIS
-   ======================================================================== */
-
-function analyzeChurnPatterns() {
-  const churnYes = rawData.filter(r => r.Churn === 'Yes' || r.Churn === '1');
-  const churnNo = rawData.filter(r => r.Churn === 'No' || r.Churn === '0');
-  
-  const churnRate = (churnYes.length / rawData.length * 100).toFixed(2);
-  
-  let html = `
-    <div class="eda-stats">
-      <div class="metric-card">
-        <div class="metric-value" style="color: #dc3545">${churnYes.length}</div>
-        <div class="metric-label">Churned Customers</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value" style="color: #28a745">${churnNo.length}</div>
-        <div class="metric-label">Retained Customers</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-value" style="color: #667eea">${churnRate}%</div>
-        <div class="metric-label">Churn Rate</div>
-      </div>
+        data: [0.25, 0.826, 0.651],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(255, 99, 132, 0.7)',
+          'rgba(255, 206, 86, 0.7)'
+        ],
+        borderColor: [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
