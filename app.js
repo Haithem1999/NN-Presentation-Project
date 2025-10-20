@@ -3,7 +3,8 @@
    Business Value: Reduce churn by 15-20% through predictive intervention
    Target Accuracy: ≥90% with Advanced Deep Learning
    
-   POINT 1 COMPLETED: Enhanced Dataset Viewer with All Features
+   POINT 1 COMPLETED: Enhanced Dataset Viewer with All Features ✅
+   POINT 2 COMPLETED: User-Selectable Variable Visualization with Smart Charts ✅
    ========================================================================= */
 
 const $ = id => document.getElementById(id);
@@ -60,7 +61,7 @@ window.onclick = function(event) {
 }
 
 /* ========================================================================
-   POINT 1: ENHANCED DATASET VIEWER - COMPLETE IMPLEMENTATION
+   POINT 1: ENHANCED DATASET VIEWER - COMPLETE IMPLEMENTATION ✅
    All features working perfectly with beautiful UI/UX
    ======================================================================== */
 
@@ -535,13 +536,15 @@ window.handleDuplicates = function(method) {
 }
 
 /* ========================================================================
-   NUMERICAL VARIABLES ANALYSIS (Placeholder - keeping existing code)
+   POINT 2: NUMERICAL VARIABLES ANALYSIS - WITH USER SELECTION ✅
    ======================================================================== */
 
 function analyzeNumericalVariables() {
   const numericalCols = identifyNumericalColumns();
   
-  let html = '<div class="data-quality-grid">';
+  // Display default statistics for first 3 numerical variables
+  let html = '<h4 style="color: #667eea; margin-bottom: 15px;">📊 Default Numerical Statistics (Top 3 Variables)</h4>';
+  html += '<div class="data-quality-grid">';
   
   numericalCols.slice(0, 3).forEach(col => {
     const values = rawData.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
@@ -577,8 +580,217 @@ function analyzeNumericalVariables() {
   });
   
   html += '</div>';
-  
   $('numericalContent').innerHTML = html;
+  
+  // Create variable selector for additional visualizations
+  createNumericalVariableSelector(numericalCols);
+}
+
+function createNumericalVariableSelector(numericalCols) {
+  const selector = $('numericalVariableSelector');
+  
+  if (numericalCols.length === 0) {
+    selector.innerHTML = '<p style="color: #6c757d;">No numerical variables found in dataset.</p>';
+    return;
+  }
+  
+  let html = '';
+  
+  numericalCols.forEach(col => {
+    const isSelected = selectedNumericalVars.includes(col);
+    html += `
+      <div class="variable-option ${isSelected ? 'selected' : ''}" onclick="toggleNumericalVariable('${col}')">
+        <div class="variable-checkbox"></div>
+        <span class="variable-name">${col}</span>
+        <span class="chart-type-badge">📊 Histogram + Box</span>
+      </div>
+    `;
+  });
+  
+  selector.innerHTML = html;
+}
+
+window.toggleNumericalVariable = function(varName) {
+  const index = selectedNumericalVars.indexOf(varName);
+  if (index > -1) {
+    selectedNumericalVars.splice(index, 1);
+  } else {
+    selectedNumericalVars.push(varName);
+  }
+  
+  const numericalCols = identifyNumericalColumns();
+  createNumericalVariableSelector(numericalCols);
+}
+
+window.visualizeSelectedNumerical = function() {
+  if (selectedNumericalVars.length === 0) {
+    alert('Please select at least one numerical variable to visualize.');
+    log('No numerical variables selected', 'warning');
+    return;
+  }
+  
+  log(`Generating visualizations for ${selectedNumericalVars.length} numerical variable(s)...`, 'info');
+  
+  const container = $('additionalNumericalCharts');
+  container.innerHTML = '';
+  
+  selectedNumericalVars.forEach(col => {
+    const values = rawData.map(r => parseFloat(r[col])).filter(v => !isNaN(v));
+    
+    if (values.length === 0) {
+      log(`No valid data for ${col}`, 'warning');
+      return;
+    }
+    
+    // Create chart container
+    const chartDiv = document.createElement('div');
+    chartDiv.style.cssText = 'background: white; padding: 25px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);';
+    
+    chartDiv.innerHTML = `
+      <h4 style="color: #667eea; margin-bottom: 20px; text-align: center;">📊 ${col} - Distribution Analysis</h4>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+          <h5 style="text-align: center; color: #2d3748; margin-bottom: 15px;">Histogram Distribution</h5>
+          <canvas id="hist_${col.replace(/[^a-zA-Z0-9]/g, '_')}"></canvas>
+        </div>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+          <h5 style="text-align: center; color: #2d3748; margin-bottom: 15px;">Box Plot (Outliers)</h5>
+          <canvas id="box_${col.replace(/[^a-zA-Z0-9]/g, '_')}"></canvas>
+        </div>
+      </div>
+      <div style="margin-top: 20px; background: linear-gradient(135deg, #e7f3ff 0%, #d4e9ff 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #3182ce;">
+        <strong style="color: #3182ce;">📈 Key Statistics:</strong><br>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+          <div><strong>Mean:</strong> ${(values.reduce((a,b) => a+b, 0) / values.length).toFixed(2)}</div>
+          <div><strong>Median:</strong> ${values.sort((a,b) => a-b)[Math.floor(values.length/2)].toFixed(2)}</div>
+          <div><strong>Std Dev:</strong> ${Math.sqrt(values.reduce((sum, v) => sum + Math.pow(v - values.reduce((a,b) => a+b, 0) / values.length, 2), 0) / values.length).toFixed(2)}</div>
+        </div>
+      </div>
+    `;
+    
+    container.appendChild(chartDiv);
+    
+    // Create histogram
+    createHistogram(col, values);
+    
+    // Create box plot
+    createBoxPlot(col, values);
+  });
+  
+  log(`✓ Generated visualizations for ${selectedNumericalVars.length} variable(s)`, 'success');
+}
+
+function createHistogram(colName, values) {
+  const canvasId = `hist_${colName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const ctx = document.getElementById(canvasId);
+  
+  if (!ctx) return;
+  
+  // Create histogram bins
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const numBins = 20;
+  const binSize = (max - min) / numBins;
+  
+  const bins = Array(numBins).fill(0);
+  values.forEach(v => {
+    const binIndex = Math.min(Math.floor((v - min) / binSize), numBins - 1);
+    bins[binIndex]++;
+  });
+  
+  const labels = Array(numBins).fill(0).map((_, i) => (min + i * binSize).toFixed(1));
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Frequency',
+        data: bins,
+        backgroundColor: 'rgba(102, 126, 234, 0.7)',
+        borderColor: 'rgba(102, 126, 234, 1)',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Frequency' }
+        },
+        x: {
+          title: { display: true, text: colName }
+        }
+      }
+    }
+  });
+}
+
+function createBoxPlot(colName, values) {
+  const canvasId = `box_${colName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const ctx = document.getElementById(canvasId);
+  
+  if (!ctx) return;
+  
+  values.sort((a, b) => a - b);
+  const q1 = values[Math.floor(values.length * 0.25)];
+  const median = values[Math.floor(values.length * 0.5)];
+  const q3 = values[Math.floor(values.length * 0.75)];
+  const min = values[0];
+  const max = values[values.length - 1];
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: [colName],
+      datasets: [
+        {
+          label: 'Min',
+          data: [min],
+          backgroundColor: 'rgba(220, 53, 69, 0.5)',
+        },
+        {
+          label: 'Q1',
+          data: [q1],
+          backgroundColor: 'rgba(255, 193, 7, 0.5)',
+        },
+        {
+          label: 'Median',
+          data: [median],
+          backgroundColor: 'rgba(40, 167, 69, 0.7)',
+        },
+        {
+          label: 'Q3',
+          data: [q3],
+          backgroundColor: 'rgba(255, 193, 7, 0.5)',
+        },
+        {
+          label: 'Max',
+          data: [max],
+          backgroundColor: 'rgba(220, 53, 69, 0.5)',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Value' }
+        }
+      }
+    }
+  });
 }
 
 function identifyNumericalColumns() {
@@ -590,15 +802,287 @@ function identifyNumericalColumns() {
 }
 
 /* ========================================================================
-   CATEGORICAL VARIABLES ANALYSIS (Placeholder - keeping existing code)
+   POINT 2: CATEGORICAL VARIABLES ANALYSIS - WITH USER SELECTION ✅
    ======================================================================== */
 
 function analyzeCategoricalVariables() {
   const categoricalCols = identifyCategoricalColumns();
   
-  let html = '<p>Categorical analysis coming soon...</p>';
+  // Display default statistics for first 3 categorical variables
+  let html = '<h4 style="color: #667eea; margin-bottom: 15px;">📁 Default Categorical Statistics (Top 3 Variables)</h4>';
+  html += '<div class="data-quality-grid">';
   
+  categoricalCols.slice(0, 3).forEach(col => {
+    const valueCounts = {};
+    rawData.forEach(row => {
+      const val = row[col] || 'Unknown';
+      valueCounts[val] = (valueCounts[val] || 0) + 1;
+    });
+    
+    const uniqueCount = Object.keys(valueCounts).length;
+    const topValue = Object.keys(valueCounts).reduce((a, b) => valueCounts[a] > valueCounts[b] ? a : b);
+    const topValuePercent = ((valueCounts[topValue] / rawData.length) * 100).toFixed(1);
+    
+    html += `
+      <div class="quality-card">
+        <h4>📁 ${col}</h4>
+        <div style="margin: 10px 0; text-align: left;">
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>Unique Values:</span><strong>${uniqueCount}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>Most Frequent:</span><strong>${topValue}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>Frequency:</span><strong>${topValuePercent}%</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+            <span>Total Records:</span><strong>${rawData.length}</strong>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
   $('categoricalContent').innerHTML = html;
+  
+  // Create variable selector for additional visualizations
+  createCategoricalVariableSelector(categoricalCols);
+}
+
+function createCategoricalVariableSelector(categoricalCols) {
+  const selector = $('categoricalVariableSelector');
+  
+  if (categoricalCols.length === 0) {
+    selector.innerHTML = '<p style="color: #6c757d;">No categorical variables found in dataset.</p>';
+    return;
+  }
+  
+  let html = '';
+  
+  categoricalCols.forEach(col => {
+    const valueCounts = {};
+    rawData.forEach(row => {
+      const val = row[col] || 'Unknown';
+      valueCounts[val] = (valueCounts[val] || 0) + 1;
+    });
+    const uniqueCount = Object.keys(valueCounts).length;
+    
+    // Recommend chart type based on unique values
+    const chartType = uniqueCount <= 10 ? '📊 Bar + Pie' : '📊 Bar Chart';
+    
+    const isSelected = selectedCategoricalVars.includes(col);
+    html += `
+      <div class="variable-option ${isSelected ? 'selected' : ''}" onclick="toggleCategoricalVariable('${col}')">
+        <div class="variable-checkbox"></div>
+        <span class="variable-name">${col}</span>
+        <span class="chart-type-badge">${chartType}</span>
+      </div>
+    `;
+  });
+  
+  selector.innerHTML = html;
+}
+
+window.toggleCategoricalVariable = function(varName) {
+  const index = selectedCategoricalVars.indexOf(varName);
+  if (index > -1) {
+    selectedCategoricalVars.splice(index, 1);
+  } else {
+    selectedCategoricalVars.push(varName);
+  }
+  
+  const categoricalCols = identifyCategoricalColumns();
+  createCategoricalVariableSelector(categoricalCols);
+}
+
+window.visualizeSelectedCategorical = function() {
+  if (selectedCategoricalVars.length === 0) {
+    alert('Please select at least one categorical variable to visualize.');
+    log('No categorical variables selected', 'warning');
+    return;
+  }
+  
+  log(`Generating visualizations for ${selectedCategoricalVars.length} categorical variable(s)...`, 'info');
+  
+  const container = $('additionalCategoricalCharts');
+  container.innerHTML = '';
+  
+  selectedCategoricalVars.forEach(col => {
+    const valueCounts = {};
+    rawData.forEach(row => {
+      const val = row[col] || 'Unknown';
+      valueCounts[val] = (valueCounts[val] || 0) + 1;
+    });
+    
+    const uniqueCount = Object.keys(valueCounts).length;
+    
+    if (uniqueCount === 0) {
+      log(`No valid data for ${col}`, 'warning');
+      return;
+    }
+    
+    // Create chart container
+    const chartDiv = document.createElement('div');
+    chartDiv.style.cssText = 'background: white; padding: 25px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);';
+    
+    // If <= 10 unique values, show both bar and pie chart
+    if (uniqueCount <= 10) {
+      chartDiv.innerHTML = `
+        <h4 style="color: #667eea; margin-bottom: 20px; text-align: center;">📁 ${col} - Distribution Analysis</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+            <h5 style="text-align: center; color: #2d3748; margin-bottom: 15px;">Bar Chart</h5>
+            <canvas id="bar_${col.replace(/[^a-zA-Z0-9]/g, '_')}"></canvas>
+          </div>
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+            <h5 style="text-align: center; color: #2d3748; margin-bottom: 15px;">Pie Chart</h5>
+            <canvas id="pie_${col.replace(/[^a-zA-Z0-9]/g, '_')}"></canvas>
+          </div>
+        </div>
+        <div style="margin-top: 20px; background: linear-gradient(135deg, #e7f3ff 0%, #d4e9ff 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #3182ce;">
+          <strong style="color: #3182ce;">📊 Key Statistics:</strong><br>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
+            <div><strong>Unique Values:</strong> ${uniqueCount}</div>
+            <div><strong>Most Frequent:</strong> ${Object.keys(valueCounts).reduce((a, b) => valueCounts[a] > valueCounts[b] ? a : b)}</div>
+            <div><strong>Frequency:</strong> ${Math.max(...Object.values(valueCounts))} records</div>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(chartDiv);
+      
+      createBarChart(col, valueCounts);
+      createPieChart(col, valueCounts);
+    } else {
+      // Only bar chart for many unique values
+      chartDiv.innerHTML = `
+        <h4 style="color: #667eea; margin-bottom: 20px; text-align: center;">📁 ${col} - Distribution Analysis</h4>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+          <h5 style="text-align: center; color: #2d3748; margin-bottom: 15px;">Bar Chart (Top 15 Values)</h5>
+          <canvas id="bar_${col.replace(/[^a-zA-Z0-9]/g, '_')}"></canvas>
+        </div>
+        <div style="margin-top: 20px; background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+          <strong style="color: #856404;">⚠️ Note:</strong> This variable has ${uniqueCount} unique values. Showing top 15 most frequent values.
+        </div>
+      `;
+      
+      container.appendChild(chartDiv);
+      
+      // Sort and take top 15
+      const sorted = Object.entries(valueCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
+      const topValueCounts = Object.fromEntries(sorted);
+      
+      createBarChart(col, topValueCounts);
+    }
+  });
+  
+  log(`✓ Generated visualizations for ${selectedCategoricalVars.length} variable(s)`, 'success');
+}
+
+function createBarChart(colName, valueCounts) {
+  const canvasId = `bar_${colName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const ctx = document.getElementById(canvasId);
+  
+  if (!ctx) return;
+  
+  const labels = Object.keys(valueCounts);
+  const data = Object.values(valueCounts);
+  
+  // Generate beautiful gradient colors
+  const colors = labels.map((_, i) => {
+    const hue = (i * 360 / labels.length) % 360;
+    return `hsla(${hue}, 70%, 60%, 0.8)`;
+  });
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Count',
+        data: data,
+        backgroundColor: colors,
+        borderColor: colors.map(c => c.replace('0.8', '1')),
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Frequency' }
+        },
+        x: {
+          title: { display: true, text: colName },
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
+      }
+    }
+  });
+}
+
+function createPieChart(colName, valueCounts) {
+  const canvasId = `pie_${colName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  const ctx = document.getElementById(canvasId);
+  
+  if (!ctx) return;
+  
+  const labels = Object.keys(valueCounts);
+  const data = Object.values(valueCounts);
+  
+  // Generate beautiful gradient colors
+  const colors = labels.map((_, i) => {
+    const hue = (i * 360 / labels.length) % 360;
+    return `hsla(${hue}, 70%, 60%, 0.8)`;
+  });
+  
+  new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: colors,
+        borderColor: '#ffffff',
+        borderWidth: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { 
+          position: 'right',
+          labels: {
+            padding: 10,
+            font: { size: 11 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 function identifyCategoricalColumns() {
@@ -702,17 +1186,17 @@ function encodeBinary(value) {
    ======================================================================== */
 
 $('trainBtn').onclick = async () => {
-  alert('Training function not yet implemented. Point 1 (Dataset Viewer) is complete!');
+  alert('Training function not yet implemented. Points 1 & 2 are complete!');
   log('Training placeholder called', 'info');
 };
 
 $('predictBtn').onclick = async () => {
-  alert('Prediction function not yet implemented. Point 1 (Dataset Viewer) is complete!');
+  alert('Prediction function not yet implemented. Points 1 & 2 are complete!');
   log('Prediction placeholder called', 'info');
 };
 
 $('visualizeBtn').onclick = () => {
-  alert('Visualization function not yet implemented. Point 1 (Dataset Viewer) is complete!');
+  alert('Visualization function not yet implemented. Points 1 & 2 are complete!');
   log('Visualization placeholder called', 'info');
 };
 
@@ -726,7 +1210,8 @@ async function init() {
     await tf.setBackend('webgl');
     log('✓ TensorFlow.js initialized with WebGL backend', 'success');
     log('System ready. Upload customer data to begin.', 'info');
-    log('🎯 Point 1 Complete: Enhanced Dataset Viewer is ready!', 'success');
+    log('🎯 Point 1 Complete: Enhanced Dataset Viewer ✅', 'success');
+    log('🎯 Point 2 Complete: User-Selectable Variable Visualization ✅', 'success');
   } catch (error) {
     await tf.setBackend('cpu');
     log('⚠️ Using CPU backend (WebGL unavailable)', 'warning');
