@@ -20,6 +20,9 @@ let featureNames = [];
 let stats = {};
 let dataQualityInfo = {};
 let charts = {};
+let selectedNumericalVars = [];
+let selectedCategoricalVars = [];
+let confusionMatrix = { tp: 0, tn: 0, fp: 0, fn: 0 };
 
 /* ========================================================================
    UTILITY FUNCTIONS
@@ -49,6 +52,58 @@ window.onclick = function(event) {
   if (event.target.classList.contains('modal')) {
     event.target.style.display = 'none';
   }
+}
+
+/* ========================================================================
+   DATASET VIEWER FUNCTIONS
+   ======================================================================== */
+
+window.displayDataset = function(mode) {
+  const table = $('datasetTable');
+  const info = $('datasetInfo');
+  
+  let dataToShow = [];
+  
+  if (mode === 'all') {
+    dataToShow = rawData;
+    info.textContent = `Showing all ${rawData.length} rows`;
+  } else if (mode === 'first10') {
+    dataToShow = rawData.slice(0, 10);
+    info.textContent = `Showing first 10 rows of ${rawData.length}`;
+  } else if (mode === 'last10') {
+    dataToShow = rawData.slice(-10);
+    info.textContent = `Showing last 10 rows of ${rawData.length}`;
+  }
+  
+  if (dataToShow.length === 0) return;
+  
+  const columns = Object.keys(dataToShow[0]);
+  
+  let html = '<thead><tr>';
+  columns.forEach(col => {
+    html += '<th>' + col + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+  
+  dataToShow.forEach(row => {
+    html += '<tr>';
+    columns.forEach(col => {
+      html += '<td>' + (row[col] || '') + '</td>';
+    });
+    html += '</tr>';
+  });
+  
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+window.closeDatasetViewer = function() {
+  $('datasetViewer').style.display = 'none';
+}
+
+$('viewDatasetBtn').onclick = () => {
+  $('datasetViewer').style.display = 'block';
+  displayDataset('first10');
 }
 
 /* ========================================================================
@@ -95,6 +150,7 @@ $('loadDataBtn').onclick = async () => {
     log(`Test set: ${processedData.test.xs.shape[0]} samples`, 'info');
     
     $('trainBtn').disabled = false;
+    $('viewDatasetBtn').style.display = 'inline-block';
     
   } catch (error) {
     log(`Error: ${error.message}`, 'error');
@@ -205,8 +261,8 @@ function displayQuickOverview() {
   parts.push('<div class="status-box success">');
   parts.push('<strong>Key Insights:</strong><br>');
   parts.push('• ' + churnCount + ' customers at risk of churning<br>');
-  parts.push('• Potential revenue loss: ' + (churnCount * avgMonthly * 12).toFixed(0) + ' per year<br>');
-  parts.push('• Average tenure: ' + avgTenure + ' months | Average monthly charge: ' + avgMonthly);
+  parts.push('• Potential revenue loss: $' + (churnCount * avgMonthly * 12).toFixed(0) + ' per year<br>');
+  parts.push('• Average tenure: ' + avgTenure + ' months | Average monthly charge: $' + avgMonthly);
   parts.push('</div>');
   
   $('quickOverview').innerHTML = parts.join('');
@@ -525,6 +581,8 @@ function analyzeNumericalVariables() {
       }
     });
   }, 100);
+  
+  createNumericalVariableSelector();
 }
 
 function createDistributionChart(column, canvasId) {
@@ -644,6 +702,8 @@ function analyzeCategoricalVariables() {
       }
     });
   }, 100);
+  
+  createCategoricalVariableSelector();
 }
 
 function createCategoricalChart(column, canvasId) {
@@ -693,6 +753,142 @@ function createCategoricalChart(column, canvasId) {
       }
     }
   });
+}
+
+function createNumericalVariableSelector() {
+  const defaultCols = ['tenure', 'MonthlyCharges', 'TotalCharges'];
+  const allCols = Object.keys(rawData[0]);
+  const numericalCols = allCols.filter(col => {
+    if (defaultCols.includes(col)) return false;
+    const sample = rawData.find(r => r[col] && r[col] !== '');
+    return sample && !isNaN(parseFloat(sample[col]));
+  });
+  
+  if (numericalCols.length === 0) {
+    $('numericalVariableSelector').innerHTML = '<p style="color: #6c757d;">No additional numerical variables available</p>';
+    return;
+  }
+  
+  let html = '';
+  numericalCols.forEach(col => {
+    html += '<div class="variable-option" onclick="toggleNumericalVar(\'' + col + '\')">';
+    html += '<input type="checkbox" id="numvar_' + col + '" style="margin-right: 5px;">';
+    html += '<label for="numvar_' + col + '">' + col + '</label>';
+    html += '</div>';
+  });
+  
+  $('numericalVariableSelector').innerHTML = html;
+}
+
+function createCategoricalVariableSelector() {
+  const defaultCols = ['Contract', 'InternetService', 'OnlineSecurity', 'TechSupport'];
+  const allCols = Object.keys(rawData[0]);
+  const categoricalCols = allCols.filter(col => {
+    if (defaultCols.includes(col) || col === 'Churn') return false;
+    const sample = rawData.find(r => r[col] && r[col] !== '');
+    return sample && isNaN(parseFloat(sample[col]));
+  });
+  
+  if (categoricalCols.length === 0) {
+    $('categoricalVariableSelector').innerHTML = '<p style="color: #6c757d;">No additional categorical variables available</p>';
+    return;
+  }
+  
+  let html = '';
+  categoricalCols.forEach(col => {
+    html += '<div class="variable-option" onclick="toggleCategoricalVar(\'' + col + '\')">';
+    html += '<input type="checkbox" id="catvar_' + col + '" style="margin-right: 5px;">';
+    html += '<label for="catvar_' + col + '">' + col + '</label>';
+    html += '</div>';
+  });
+  
+  $('categoricalVariableSelector').innerHTML = html;
+}
+
+window.toggleNumericalVar = function(varName) {
+  const checkbox = $('numvar_' + varName);
+  const option = checkbox.parentElement;
+  
+  if (selectedNumericalVars.includes(varName)) {
+    selectedNumericalVars = selectedNumericalVars.filter(v => v !== varName);
+    option.classList.remove('selected');
+    checkbox.checked = false;
+  } else {
+    selectedNumericalVars.push(varName);
+    option.classList.add('selected');
+    checkbox.checked = true;
+  }
+}
+
+window.toggleCategoricalVar = function(varName) {
+  const checkbox = $('catvar_' + varName);
+  const option = checkbox.parentElement;
+  
+  if (selectedCategoricalVars.includes(varName)) {
+    selectedCategoricalVars = selectedCategoricalVars.filter(v => v !== varName);
+    option.classList.remove('selected');
+    checkbox.checked = false;
+  } else {
+    selectedCategoricalVars.push(varName);
+    option.classList.add('selected');
+    checkbox.checked = true;
+  }
+}
+
+window.visualizeSelectedNumerical = function() {
+  if (selectedNumericalVars.length === 0) {
+    alert('Please select at least one variable to visualize');
+    return;
+  }
+  
+  log('Visualizing ' + selectedNumericalVars.length + ' additional numerical variables...', 'info');
+  
+  let html = '<h4 style="margin: 20px 0; color: #667eea;">Additional Numerical Variables:</h4>';
+  html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">';
+  
+  selectedNumericalVars.forEach((col, idx) => {
+    html += '<div class="chart-container" style="height: 300px;"><canvas id="extraNumChart' + idx + '"></canvas></div>';
+  });
+  
+  html += '</div>';
+  
+  $('additionalNumericalCharts').innerHTML = html;
+  
+  setTimeout(() => {
+    selectedNumericalVars.forEach((col, idx) => {
+      createDistributionChart(col, 'extraNumChart' + idx);
+    });
+  }, 100);
+  
+  log('✓ Additional visualizations created', 'success');
+}
+
+window.visualizeSelectedCategorical = function() {
+  if (selectedCategoricalVars.length === 0) {
+    alert('Please select at least one variable to visualize');
+    return;
+  }
+  
+  log('Visualizing ' + selectedCategoricalVars.length + ' additional categorical variables...', 'info');
+  
+  let html = '<h4 style="margin: 20px 0; color: #667eea;">Additional Categorical Variables:</h4>';
+  html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">';
+  
+  selectedCategoricalVars.forEach((col, idx) => {
+    html += '<div class="chart-container" style="height: 300px;"><canvas id="extraCatChart' + idx + '"></canvas></div>';
+  });
+  
+  html += '</div>';
+  
+  $('additionalCategoricalCharts').innerHTML = html;
+  
+  setTimeout(() => {
+    selectedCategoricalVars.forEach((col, idx) => {
+      createCategoricalChart(col, 'extraCatChart' + idx);
+    });
+  }, 100);
+  
+  log('✓ Additional visualizations created', 'success');
 }
 
 function analyzeCorrelations() {
@@ -785,7 +981,7 @@ function analyzeChurnPatterns() {
   parts.push('<strong>Business Impact:</strong><br>');
   parts.push('• ' + churnYes.length + ' customers at risk of leaving<br>');
   const revenueLoss = (churnYes.length * stats.avgMonthly * 12).toFixed(0);
-  parts.push('• Estimated revenue loss: ' + revenueLoss + ' per year<br>');
+  parts.push('• Estimated revenue loss:  + revenueLoss + ' per year<br>');
   parts.push('• Retention campaigns could save 70-80% of at-risk customers');
   parts.push('</div>');
   
@@ -905,6 +1101,10 @@ function encodeBinary(value) {
   return (lower === 'yes' || lower === '1') ? 1 : 0;
 }
 
+/* ========================================================================
+   STEP 2: MODEL TRAINING
+   ======================================================================== */
+
 $('trainBtn').onclick = async () => {
   if (!processedData.train) {
     alert('Please load data first');
@@ -912,27 +1112,45 @@ $('trainBtn').onclick = async () => {
   }
   
   try {
-    log('Building Neural Network model...', 'info');
+    log('Building Enhanced Neural Network model...', 'info');
     
     model = tf.sequential({
       layers: [
         tf.layers.dense({ 
           inputShape: [8], 
+          units: 128, 
+          activation: 'relu',
+          kernelInitializer: 'heNormal',
+          kernelRegularizer: tf.regularizers.l2({ l2: 0.001 })
+        }),
+        tf.layers.batchNormalization(),
+        tf.layers.dropout({ rate: 0.4 }),
+        
+        tf.layers.dense({ 
+          units: 96, 
+          activation: 'relu',
+          kernelInitializer: 'heNormal',
+          kernelRegularizer: tf.regularizers.l2({ l2: 0.001 })
+        }),
+        tf.layers.batchNormalization(),
+        tf.layers.dropout({ rate: 0.35 }),
+        
+        tf.layers.dense({ 
           units: 64, 
           activation: 'relu',
-          kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
+          kernelInitializer: 'heNormal',
+          kernelRegularizer: tf.regularizers.l2({ l2: 0.001 })
         }),
+        tf.layers.batchNormalization(),
         tf.layers.dropout({ rate: 0.3 }),
+        
         tf.layers.dense({ 
           units: 32, 
           activation: 'relu',
-          kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
+          kernelInitializer: 'heNormal'
         }),
         tf.layers.dropout({ rate: 0.2 }),
-        tf.layers.dense({ 
-          units: 16, 
-          activation: 'relu' 
-        }),
+        
         tf.layers.dense({ 
           units: 1, 
           activation: 'sigmoid' 
@@ -940,26 +1158,32 @@ $('trainBtn').onclick = async () => {
       ]
     });
     
+    const optimizer = tf.train.adam(0.0005);
+    
     model.compile({
-      optimizer: tf.train.adam(0.001),
+      optimizer: optimizer,
       loss: 'binaryCrossentropy',
-      metrics: ['accuracy']
+      metrics: ['accuracy', 'precision', 'recall']
     });
     
-    log('✓ Model architecture created', 'success');
-    log('Training model... (this may take 1-2 minutes)', 'info');
+    log('✓ Enhanced model architecture created', 'success');
+    log('Training model with advanced techniques... (this may take 2-3 minutes)', 'info');
     
-    await model.fit(processedData.train.xs, processedData.train.ys, {
-      epochs: 50,
-      batchSize: 32,
-      validationSplit: 0.2,
-      callbacks: {
-        onEpochEnd: (epoch, logs) => {
-          if ((epoch + 1) % 10 === 0) {
-            log('Epoch ' + (epoch + 1) + '/50 - loss: ' + logs.loss.toFixed(4) + ', acc: ' + logs.acc.toFixed(4), 'info');
-          }
+    const callbacks = {
+      onEpochEnd: (epoch, logs) => {
+        if ((epoch + 1) % 10 === 0) {
+          log('Epoch ' + (epoch + 1) + '/100 - loss: ' + logs.loss.toFixed(4) + ', acc: ' + logs.acc.toFixed(4), 'info');
         }
       }
+    };
+    
+    await model.fit(processedData.train.xs, processedData.train.ys, {
+      epochs: 100,
+      batchSize: 16,
+      validationSplit: 0.2,
+      callbacks: callbacks,
+      shuffle: true,
+      verbose: 0
     });
     
     const evalResult = model.evaluate(processedData.test.xs, processedData.test.ys);
@@ -970,11 +1194,14 @@ $('trainBtn').onclick = async () => {
     log('Test Accuracy: ' + (testAcc * 100).toFixed(2) + '%', 'success');
     log('Test Loss: ' + testLoss.toFixed(4), 'info');
     
+    await calculateConfusionMatrix();
     displayMetrics(testAcc, testLoss);
     calculateFeatureImportance();
+    generatePostTrainingAnalysis(testAcc);
     
     $('predictBtn').disabled = false;
     $('batchPredictBtn').disabled = false;
+    $('batchPredictFromFileBtn').disabled = false;
     
     evalResult.forEach(t => t.dispose());
     
@@ -985,9 +1212,9 @@ $('trainBtn').onclick = async () => {
 };
 
 function displayMetrics(accuracy, loss) {
-  const precision = 0.82;
-  const recall = 0.78;
-  const f1Score = 2 * (precision * recall) / (precision + recall);
+  const precision = confusionMatrix.tp / (confusionMatrix.tp + confusionMatrix.fp) || 0;
+  const recall = confusionMatrix.tp / (confusionMatrix.tp + confusionMatrix.fn) || 0;
+  const f1Score = 2 * (precision * recall) / (precision + recall) || 0;
   
   const parts = [];
   parts.push('<div class="eda-stats">');
@@ -1012,7 +1239,7 @@ function displayMetrics(accuracy, loss) {
   parts.push('<strong>Business Impact:</strong><br>');
   parts.push('With ' + (accuracy * 100).toFixed(1) + '% accuracy, this model can correctly identify ');
   parts.push(Math.floor(stats.churnCount * accuracy) + ' at-risk customers, ');
-  parts.push('enabling targeted retention campaigns worth ');
+  parts.push('enabling targeted retention campaigns worth );
   const savedRevenue = Math.floor(stats.churnCount * accuracy * stats.avgMonthly * 12 * 0.7).toLocaleString();
   parts.push(savedRevenue + ' in saved revenue.');
   parts.push('</div>');
@@ -1082,8 +1309,9 @@ function calculateFeatureImportance() {
   parts.push('<div class="feature-importance">');
   importance.forEach(feat => {
     parts.push('<div class="feature-bar">');
+    parts.push('<div class="feature-bar-label">' + feat.name + '</div>');
     parts.push('<div class="feature-bar-fill" style="width: ' + (feat.value * 100) + '%">');
-    parts.push(feat.name + ': ' + (feat.value * 100).toFixed(1) + '%');
+    parts.push('<span style="margin-left: auto;">' + (feat.value * 100).toFixed(1) + '%</span>');
     parts.push('</div>');
     parts.push('</div>');
   });
@@ -1092,6 +1320,109 @@ function calculateFeatureImportance() {
   $('featureImportance').innerHTML = parts.join('');
   log('✓ Feature importance calculated', 'success');
 }
+
+async function calculateConfusionMatrix() {
+  const predictions = model.predict(processedData.test.xs);
+  const predArray = await predictions.data();
+  const labelsArray = await processedData.test.ys.data();
+  
+  confusionMatrix = { tp: 0, tn: 0, fp: 0, fn: 0 };
+  
+  for (let i = 0; i < predArray.length; i++) {
+    const predicted = predArray[i] > 0.5 ? 1 : 0;
+    const actual = labelsArray[i];
+    
+    if (predicted === 1 && actual === 1) confusionMatrix.tp++;
+    else if (predicted === 0 && actual === 0) confusionMatrix.tn++;
+    else if (predicted === 1 && actual === 0) confusionMatrix.fp++;
+    else if (predicted === 0 && actual === 1) confusionMatrix.fn++;
+  }
+  
+  predictions.dispose();
+}
+
+function generatePostTrainingAnalysis(accuracy) {
+  const parts = [];
+  
+  parts.push('<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">');
+  
+  parts.push('<div class="eda-section">');
+  parts.push('<h3>🎯 Confusion Matrix</h3>');
+  parts.push('<p style="color: #6c757d; margin-bottom: 15px;">Shows model prediction accuracy breakdown</p>');
+  parts.push('<div class="confusion-matrix">');
+  parts.push('<div class="confusion-cell header"></div>');
+  parts.push('<div class="confusion-cell header">Predicted: No Churn</div>');
+  parts.push('<div class="confusion-cell header">Predicted: Churn</div>');
+  
+  parts.push('<div class="confusion-cell header">Actual: No Churn</div>');
+  parts.push('<div class="confusion-cell tn">' + confusionMatrix.tn + '<br><small>True Negatives</small></div>');
+  parts.push('<div class="confusion-cell fp">' + confusionMatrix.fp + '<br><small>False Positives</small></div>');
+  
+  parts.push('<div class="confusion-cell header">Actual: Churn</div>');
+  parts.push('<div class="confusion-cell fn">' + confusionMatrix.fn + '<br><small>False Negatives</small></div>');
+  parts.push('<div class="confusion-cell tp">' + confusionMatrix.tp + '<br><small>True Positives</small></div>');
+  parts.push('</div>');
+  
+  const specificity = confusionMatrix.tn / (confusionMatrix.tn + confusionMatrix.fp);
+  const sensitivity = confusionMatrix.tp / (confusionMatrix.tp + confusionMatrix.fn);
+  
+  parts.push('<div style="margin-top: 20px;">');
+  parts.push('<div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 5px 0;">');
+  parts.push('<strong>Specificity (True Negative Rate):</strong> ' + (specificity * 100).toFixed(1) + '%');
+  parts.push('</div>');
+  parts.push('<div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 5px 0;">');
+  parts.push('<strong>Sensitivity (True Positive Rate):</strong> ' + (sensitivity * 100).toFixed(1) + '%');
+  parts.push('</div>');
+  parts.push('</div>');
+  parts.push('</div>');
+  
+  parts.push('<div class="eda-section">');
+  parts.push('<h3>💡 Model Interpretability & Insights</h3>');
+  
+  parts.push('<div class="status-box success" style="margin: 15px 0;">');
+  parts.push('<strong>Key Strengths:</strong><br>');
+  parts.push('✓ High accuracy of ' + (accuracy * 100).toFixed(1) + '% indicates reliable predictions<br>');
+  parts.push('✓ Model correctly identifies ' + confusionMatrix.tp + ' churning customers<br>');
+  parts.push('✓ ' + confusionMatrix.tn + ' non-churning customers correctly classified');
+  parts.push('</div>');
+  
+  parts.push('<div class="status-box warning" style="margin: 15px 0;">');
+  parts.push('<strong>Areas to Monitor:</strong><br>');
+  parts.push('• ' + confusionMatrix.fn + ' false negatives (missed churners) - Cost: Lost customers<br>');
+  parts.push('• ' + confusionMatrix.fp + ' false positives (false alarms) - Cost: Unnecessary retention efforts');
+  parts.push('</div>');
+  
+  parts.push('<div class="status-box" style="margin: 15px 0;">');
+  parts.push('<strong>🎯 Actionable Recommendations:</strong><br>');
+  parts.push('1. <strong>Prioritize High-Risk Customers:</strong> Focus on customers with 70%+ churn probability<br>');
+  parts.push('2. <strong>Monitor Tenure:</strong> Customers with less than 12 months tenure are high-risk<br>');
+  parts.push('3. <strong>Contract Strategy:</strong> Encourage month-to-month customers to upgrade contracts<br>');
+  parts.push('4. <strong>Service Quality:</strong> Improve tech support and online security offerings<br>');
+  parts.push('5. <strong>Pricing Review:</strong> Customers with high monthly charges need value justification');
+  parts.push('</div>');
+  
+  const costFN = confusionMatrix.fn * stats.avgMonthly * 12;
+  const costFP = confusionMatrix.fp * stats.avgMonthly * 2;
+  const savings = (confusionMatrix.tp * stats.avgMonthly * 12 * 0.7) - costFP;
+  
+  parts.push('<div class="status-box success" style="margin: 15px 0;">');
+  parts.push('<strong>💰 Business Value Analysis:</strong><br>');
+  parts.push('• Potential revenue saved: <strong> + Math.floor(confusionMatrix.tp * stats.avgMonthly * 12 * 0.7).toLocaleString() + '</strong><br>');
+  parts.push('• Cost of false positives: <strong> + Math.floor(costFP).toLocaleString() + '</strong><br>');
+  parts.push('• Cost of false negatives: <strong> + Math.floor(costFN).toLocaleString() + '</strong><br>');
+  parts.push('• <strong>Net ROI:  + Math.floor(savings).toLocaleString() + '</strong>');
+  parts.push('</div>');
+  
+  parts.push('</div>');
+  parts.push('</div>');
+  
+  $('postTrainingAnalysis').innerHTML = parts.join('');
+  log('✓ Post-training analysis complete', 'success');
+}
+
+/* ========================================================================
+   STEP 3: PREDICTIONS
+   ======================================================================== */
 
 $('predictBtn').onclick = async () => {
   if (!model) {
@@ -1147,15 +1478,15 @@ function displayPredictionResult(churnProb, tenure, monthly, total, contract) {
   parts.push('<h3>' + riskEmoji + ' ' + riskLabel + ' - ' + (churnProb * 100).toFixed(1) + '% Churn Probability</h3>');
   parts.push('<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0;">');
   parts.push('<div class="metric-card">');
-  parts.push('<div class="metric-value">' + lifetimeValue.toFixed(0) + '</div>');
+  parts.push('<div class="metric-value"> + lifetimeValue.toFixed(0) + '</div>');
   parts.push('<div class="metric-label">Customer Lifetime Value</div>');
   parts.push('</div>');
   parts.push('<div class="metric-card">');
-  parts.push('<div class="metric-value">' + retentionCost.toFixed(0) + '</div>');
+  parts.push('<div class="metric-value"> + retentionCost.toFixed(0) + '</div>');
   parts.push('<div class="metric-label">Est. Retention Cost</div>');
   parts.push('</div>');
   parts.push('<div class="metric-card">');
-  parts.push('<div class="metric-value" style="color: #28a745">' + netValue.toFixed(0) + '</div>');
+  parts.push('<div class="metric-value" style="color: #28a745"> + netValue.toFixed(0) + '</div>');
   parts.push('<div class="metric-label">Net Value if Retained</div>');
   parts.push('</div>');
   parts.push('</div>');
@@ -1215,7 +1546,7 @@ $('batchPredictBtn').onclick = async () => {
   }
   
   try {
-    log('Running batch predictions...', 'info');
+    log('Running batch predictions on test set...', 'info');
     
     const predictions = model.predict(processedData.test.xs);
     const predArray = await predictions.data();
@@ -1253,8 +1584,8 @@ $('batchPredictBtn').onclick = async () => {
     parts.push('<div class="status-box warning">');
     parts.push('<strong>📊 Batch Analysis Summary:</strong><br>');
     parts.push('• Total high-risk customers: ' + totalAtRisk + ' (' + (totalAtRisk / risks.length * 100).toFixed(1) + '%)<br>');
-    parts.push('• Potential annual revenue at risk: <strong>' + potentialLoss.toFixed(0) + '</strong><br>');
-    parts.push('• With 70% retention success rate: Save <strong>' + savedAmount + '</strong><br>');
+    parts.push('• Potential annual revenue at risk: <strong> + potentialLoss.toFixed(0) + '</strong><br>');
+    parts.push('• With 70% retention success rate: Save <strong> + savedAmount + '</strong><br>');
     parts.push('• ROI of retention campaign: <strong>' + roiValue + 'x</strong>');
     parts.push('</div>');
     
@@ -1265,6 +1596,184 @@ $('batchPredictBtn').onclick = async () => {
     console.error(error);
   }
 };
+
+$('batchPredictFromFileBtn').onclick = async () => {
+  const file = $('batchPredictionFile').files[0];
+  
+  if (!file) {
+    alert('Please select a CSV file for batch prediction');
+    return;
+  }
+  
+  if (!model) {
+    alert('Please train the model first');
+    return;
+  }
+  
+  try {
+    log('Loading batch prediction file...', 'info');
+    
+    const text = await file.text();
+    const batchData = parseCSV(text);
+    
+    if (batchData.length === 0) {
+      throw new Error('No data found in CSV');
+    }
+    
+    log('Processing ' + batchData.length + ' customers...', 'info');
+    
+    const features = [];
+    batchData.forEach(row => {
+      const feature = [
+        parseFloat(row.tenure || 0),
+        parseFloat(row.MonthlyCharges || 0),
+        parseFloat(row.TotalCharges || 0),
+        encodeContract(row.Contract),
+        encodeBinary(row.OnlineSecurity),
+        encodeBinary(row.TechSupport),
+        encodeBinary(row.InternetService),
+        parseFloat(row.tenure || 0) / 12
+      ];
+      features.push(feature);
+    });
+    
+    const normalized = [];
+    for (let i = 0; i < features[0].length; i++) {
+      const column = features.map(f => f[i]);
+      normalized.push(column.map(val => {
+        const scaleData = processedData.scaler[i];
+        return scaleData.max > scaleData.min ? (val - scaleData.min) / (scaleData.max - scaleData.min) : 0;
+      }));
+    }
+    
+    const normalizedFeatures = features.map((_, idx) => 
+      normalized.map(col => col[idx])
+    );
+    
+    const inputTensor = tf.tensor2d(normalizedFeatures);
+    const predictions = model.predict(inputTensor);
+    const predArray = await predictions.data();
+    
+    inputTensor.dispose();
+    predictions.dispose();
+    
+    log('✓ Predictions complete for ' + batchData.length + ' customers', 'success');
+    
+    const results = Array.from(predArray).map((prob, idx) => ({
+      idx: idx,
+      prob: prob,
+      data: batchData[idx]
+    }));
+    
+    results.sort((a, b) => b.prob - a.prob);
+    
+    const highRisk = results.filter(r => r.prob > 0.7);
+    const mediumRisk = results.filter(r => r.prob >= 0.4 && r.prob <= 0.7);
+    const lowRisk = results.filter(r => r.prob < 0.4);
+    
+    const parts = [];
+    parts.push('<h3>📊 Batch Prediction Results</h3>');
+    
+    parts.push('<div class="eda-stats">');
+    parts.push('<div class="metric-card">');
+    parts.push('<div class="metric-value">' + results.length + '</div>');
+    parts.push('<div class="metric-label">Total Customers</div>');
+    parts.push('</div>');
+    parts.push('<div class="metric-card">');
+    parts.push('<div class="metric-value" style="color: #dc3545">' + highRisk.length + '</div>');
+    parts.push('<div class="metric-label">High Risk</div>');
+    parts.push('</div>');
+    parts.push('<div class="metric-card">');
+    parts.push('<div class="metric-value" style="color: #ffc107">' + mediumRisk.length + '</div>');
+    parts.push('<div class="metric-label">Medium Risk</div>');
+    parts.push('</div>');
+    parts.push('<div class="metric-card">');
+    parts.push('<div class="metric-value" style="color: #28a745">' + lowRisk.length + '</div>');
+    parts.push('<div class="metric-label">Low Risk</div>');
+    parts.push('</div>');
+    parts.push('</div>');
+    
+    parts.push('<h4 style="margin-top: 20px;">🔴 High Risk Customers (Top 20)</h4>');
+    parts.push('<div style="max-height: 400px; overflow-y: auto; background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">');
+    
+    const topHigh = results.slice(0, Math.min(20, results.length));
+    topHigh.forEach((customer, idx) => {
+      const risk = customer.prob > 0.7 ? 'high' : customer.prob > 0.4 ? 'medium' : 'low';
+      const emoji = risk === 'high' ? '🔴' : risk === 'medium' ? '🟡' : '🟢';
+      
+      parts.push('<div class="prediction-result risk-' + risk + '" style="margin: 10px 0;">');
+      parts.push('<strong>' + emoji + ' Customer #' + (idx + 1) + '</strong><br>');
+      parts.push('Churn Probability: <strong>' + (customer.prob * 100).toFixed(1) + '%</strong><br>');
+      
+      if (customer.data.tenure) {
+        parts.push('<small>Tenure: ' + customer.data.tenure + ' months | ');
+      }
+      if (customer.data.MonthlyCharges) {
+        parts.push('Monthly:  + customer.data.MonthlyCharges + ' | ');
+      }
+      if (customer.data.Contract) {
+        parts.push('Contract: ' + customer.data.Contract);
+      }
+      parts.push('</small>');
+      
+      parts.push('</div>');
+    });
+    
+    parts.push('</div>');
+    
+    const avgMonthly = batchData.reduce((sum, r) => sum + parseFloat(r.MonthlyCharges || 0), 0) / batchData.length;
+    const potentialLoss = highRisk.length * avgMonthly * 12;
+    const savedAmount = (potentialLoss * 0.7).toFixed(0);
+    
+    parts.push('<div class="status-box warning">');
+    parts.push('<strong>💰 Financial Impact Analysis:</strong><br>');
+    parts.push('• High-risk customers: ' + highRisk.length + ' (' + (highRisk.length / results.length * 100).toFixed(1) + '%)<br>');
+    parts.push('• Potential annual revenue at risk: <strong> + potentialLoss.toFixed(0) + '</strong><br>');
+    parts.push('• Expected savings with retention: <strong> + savedAmount + '</strong><br>');
+    parts.push('• Recommended immediate action on top ' + Math.min(20, highRisk.length) + ' customers');
+    parts.push('</div>');
+    
+    parts.push('<button class="secondary" style="margin-top: 15px;" onclick="downloadPredictionResults()">Download Full Results (CSV)</button>');
+    
+    $('predictionResults').innerHTML = parts.join('');
+    
+    window.batchResults = results;
+    
+  } catch (error) {
+    log('Batch prediction error: ' + error.message, 'error');
+    console.error(error);
+    alert('Error processing batch file: ' + error.message);
+  }
+};
+
+window.downloadPredictionResults = function() {
+  if (!window.batchResults) {
+    alert('No results to download');
+    return;
+  }
+  
+  let csv = 'Customer_ID,Churn_Probability,Risk_Level,Tenure,Monthly_Charges,Contract\n';
+  
+  window.batchResults.forEach((result, idx) => {
+    const riskLevel = result.prob > 0.7 ? 'High' : result.prob > 0.4 ? 'Medium' : 'Low';
+    csv += (idx + 1) + ',';
+    csv += (result.prob * 100).toFixed(2) + '%,';
+    csv += riskLevel + ',';
+    csv += (result.data.tenure || '') + ',';
+    csv += (result.data.MonthlyCharges || '') + ',';
+    csv += (result.data.Contract || '') + '\n';
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'churn_predictions_' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+  
+  log('✓ Results downloaded successfully', 'success');
+}
 
 $('visualizeBtn').onclick = () => {
   if (!model) {
