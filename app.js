@@ -205,8 +205,8 @@ function displayQuickOverview() {
   parts.push('<div class="status-box success">');
   parts.push('<strong>Key Insights:</strong><br>');
   parts.push('• ' + churnCount + ' customers at risk of churning<br>');
-  parts.push('• Potential revenue loss: ' + (churnCount * avgMonthly * 12).toFixed(0) + ' per year<br>');
-  parts.push('• Average tenure: ' + avgTenure + ' months | Average monthly charge: ' + avgMonthly);
+  parts.push('• Potential revenue loss: $' + (churnCount * avgMonthly * 12).toFixed(0) + ' per year<br>');
+  parts.push('• Average tenure: ' + avgTenure + ' months | Average monthly charge: $' + avgMonthly);
   parts.push('</div>');
   
   $('quickOverview').innerHTML = parts.join('');
@@ -785,7 +785,7 @@ function analyzeChurnPatterns() {
   parts.push('<strong>Business Impact:</strong><br>');
   parts.push('• ' + churnYes.length + ' customers at risk of leaving<br>');
   const revenueLoss = (churnYes.length * stats.avgMonthly * 12).toFixed(0);
-  parts.push('• Estimated revenue loss: ' + revenueLoss + ' per year<br>');
+  parts.push('• Estimated revenue loss:  + revenueLoss + ' per year<br>');
   parts.push('• Retention campaigns could save 70-80% of at-risk customers');
   parts.push('</div>');
   
@@ -1012,7 +1012,7 @@ function displayMetrics(accuracy, loss) {
   parts.push('<strong>Business Impact:</strong><br>');
   parts.push('With ' + (accuracy * 100).toFixed(1) + '% accuracy, this model can correctly identify ');
   parts.push(Math.floor(stats.churnCount * accuracy) + ' at-risk customers, ');
-  parts.push('enabling targeted retention campaigns worth ');
+  parts.push('enabling targeted retention campaigns worth );
   const savedRevenue = Math.floor(stats.churnCount * accuracy * stats.avgMonthly * 12 * 0.7).toLocaleString();
   parts.push(savedRevenue + ' in saved revenue.');
   parts.push('</div>');
@@ -1147,15 +1147,15 @@ function displayPredictionResult(churnProb, tenure, monthly, total, contract) {
   parts.push('<h3>' + riskEmoji + ' ' + riskLabel + ' - ' + (churnProb * 100).toFixed(1) + '% Churn Probability</h3>');
   parts.push('<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0;">');
   parts.push('<div class="metric-card">');
-  parts.push('<div class="metric-value">' + lifetimeValue.toFixed(0) + '</div>');
+  parts.push('<div class="metric-value"> + lifetimeValue.toFixed(0) + '</div>');
   parts.push('<div class="metric-label">Customer Lifetime Value</div>');
   parts.push('</div>');
   parts.push('<div class="metric-card">');
-  parts.push('<div class="metric-value">' + retentionCost.toFixed(0) + '</div>');
+  parts.push('<div class="metric-value"> + retentionCost.toFixed(0) + '</div>');
   parts.push('<div class="metric-label">Est. Retention Cost</div>');
   parts.push('</div>');
   parts.push('<div class="metric-card">');
-  parts.push('<div class="metric-value" style="color: #28a745">' + netValue.toFixed(0) + '</div>');
+  parts.push('<div class="metric-value" style="color: #28a745"> + netValue.toFixed(0) + '</div>');
   parts.push('<div class="metric-label">Net Value if Retained</div>');
   parts.push('</div>');
   parts.push('</div>');
@@ -1253,8 +1253,8 @@ $('batchPredictBtn').onclick = async () => {
     parts.push('<div class="status-box warning">');
     parts.push('<strong>📊 Batch Analysis Summary:</strong><br>');
     parts.push('• Total high-risk customers: ' + totalAtRisk + ' (' + (totalAtRisk / risks.length * 100).toFixed(1) + '%)<br>');
-    parts.push('• Potential annual revenue at risk: <strong>' + potentialLoss.toFixed(0) + '</strong><br>');
-    parts.push('• With 70% retention success rate: Save <strong>' + savedAmount + '</strong><br>');
+    parts.push('• Potential annual revenue at risk: <strong> + potentialLoss.toFixed(0) + '</strong><br>');
+    parts.push('• With 70% retention success rate: Save <strong> + savedAmount + '</strong><br>');
     parts.push('• ROI of retention campaign: <strong>' + roiValue + 'x</strong>');
     parts.push('</div>');
     
