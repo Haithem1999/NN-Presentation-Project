@@ -32,6 +32,7 @@ let dataQualityInfo = {};
 let charts = {};
 let engineeredFeatures = false;
 let originalDataBackup = [];
+let selectedFeatures = [];
 
 /* ========================================================================
    UTILITY FUNCTIONS
@@ -99,6 +100,7 @@ $('loadDataBtn').onclick = async () => {
     
     $('edaTabs').style.display = 'flex';
     $('featureEngineeringBtn').disabled = false;
+    $('viewDataBtn').disabled = false;
     
     log('Starting EDA...', 'info');
     performComprehensiveEDA();
@@ -605,39 +607,244 @@ function createDistributionChart(column, canvasId) {
 }
 
 /* ========================================================================
+   DATA DISPLAY FUNCTIONALITY
+   ======================================================================== */
+
+$('viewDataBtn').onclick = () => {
+  openModal('dataViewModal');
+  displayDataset('first10'); // Default to first 10 rows
+};
+
+window.displayDataset = function(option) {
+  let dataToDisplay = [];
+  let title = '';
+  
+  if (option === 'all') {
+    dataToDisplay = rawData;
+    title = 'All Rows (' + rawData.length + ' records)';
+  } else if (option === 'first10') {
+    dataToDisplay = rawData.slice(0, 10);
+    title = 'First 10 Rows';
+  } else if (option === 'last10') {
+    dataToDisplay = rawData.slice(-10);
+    title = 'Last 10 Rows';
+  }
+  
+  if (dataToDisplay.length === 0) {
+    $('dataTableContainer').innerHTML = '<p style="padding: 20px; text-align: center;">No data to display</p>';
+    return;
+  }
+  
+  const columns = Object.keys(dataToDisplay[0]);
+  
+  const parts = [];
+  parts.push('<h4 style="padding: 15px; margin: 0; background: #f8f9fa;">' + title + '</h4>');
+  parts.push('<table class="data-table" style="margin: 0; width: 100%;">');
+  parts.push('<thead><tr>');
+  parts.push('<th style="position: sticky; top: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 1;">#</th>');
+  columns.forEach(col => {
+    parts.push('<th style="position: sticky; top: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 1;">' + col + '</th>');
+  });
+  parts.push('</tr></thead>');
+  parts.push('<tbody>');
+  
+  dataToDisplay.forEach((row, idx) => {
+    const actualIdx = option === 'last10' ? rawData.length - 10 + idx : idx;
+    parts.push('<tr>');
+    parts.push('<td style="font-weight: bold; background: #f8f9fa;">' + (actualIdx + 1) + '</td>');
+    columns.forEach(col => {
+      parts.push('<td>' + (row[col] || '') + '</td>');
+    });
+    parts.push('</tr>');
+  });
+  
+  parts.push('</tbody></table>');
+  
+  $('dataTableContainer').innerHTML = parts.join('');
+}
+
+/* ========================================================================
    FEATURE ENGINEERING
    ======================================================================== */
 
 $('featureEngineeringBtn').onclick = () => {
-  showFeatureEngineeringOptions();
+  analyzeAndRecommendFeatures();
 };
 
-function showFeatureEngineeringOptions() {
+function analyzeAndRecommendFeatures() {
+  log('Analyzing dataset for feature engineering opportunities...', 'info');
+  
+  const columns = Object.keys(rawData[0]);
+  const recommendations = [];
+  
+  // Analyze available columns and recommend features
+  const hasColumn = (col) => columns.some(c => c.toLowerCase().includes(col.toLowerCase()));
+  
+  // 1. Tenure-based features
+  if (hasColumn('tenure')) {
+    recommendations.push({
+      id: 'tenureGroup',
+      name: 'Tenure Groups',
+      description: 'Categorize customers by tenure length (New: 0-12 months, Mid: 13-36 months, Long: 36+ months)',
+      impact: 'High',
+      reason: 'Different tenure groups show distinct churn patterns',
+      checked: true
+    });
+    
+    recommendations.push({
+      id: 'tenureYears',
+      name: 'Tenure in Years',
+      description: 'Convert tenure months to years for better scaling',
+      impact: 'Medium',
+      reason: 'Normalized time representation',
+      checked: true
+    });
+  }
+  
+  // 2. Charge-based features
+  if (hasColumn('monthly') && hasColumn('total')) {
+    recommendations.push({
+      id: 'chargeRatio',
+      name: 'Charge Ratio',
+      description: 'Monthly charges relative to average spending (spending velocity)',
+      impact: 'High',
+      reason: 'Identifies customers with changing spending patterns',
+      checked: true
+    });
+    
+    recommendations.push({
+      id: 'avgMonthlySpend',
+      name: 'Average Monthly Spend',
+      description: 'Historical average: Total charges divided by tenure',
+      impact: 'Medium',
+      reason: 'Smooths out payment fluctuations',
+      checked: true
+    });
+  }
+  
+  if (hasColumn('monthly')) {
+    recommendations.push({
+      id: 'valueSegment',
+      name: 'Value Segment',
+      description: 'Customer tier based on monthly charges (Low: <$35, Medium: $35-$70, High: >$70)',
+      impact: 'High',
+      reason: 'Different value segments require different retention strategies',
+      checked: true
+    });
+    
+    recommendations.push({
+      id: 'highValueFlag',
+      name: 'High Value Customer Flag',
+      description: 'Binary indicator for premium customers (monthly charges > $70)',
+      impact: 'Medium',
+      reason: 'Quick identification of high-value customers',
+      checked: true
+    });
+  }
+  
+  // 3. Service-based features
+  const serviceColumns = columns.filter(col => 
+    col.toLowerCase().includes('online') || 
+    col.toLowerCase().includes('tech') ||
+    col.toLowerCase().includes('streaming') ||
+    col.toLowerCase().includes('backup') ||
+    col.toLowerCase().includes('protection')
+  );
+  
+  if (serviceColumns.length > 0) {
+    recommendations.push({
+      id: 'serviceCount',
+      name: 'Service Count',
+      description: 'Total number of additional services subscribed (OnlineSecurity, TechSupport, etc.)',
+      impact: 'High',
+      reason: 'More services = higher engagement and lower churn',
+      checked: true
+    });
+    
+    if (hasColumn('monthly')) {
+      recommendations.push({
+        id: 'paymentPerService',
+        name: 'Payment Per Service',
+        description: 'Average cost per service used (Monthly charges / Service count)',
+        impact: 'Medium',
+        reason: 'Identifies value perception issues',
+        checked: false
+      });
+    }
+  }
+  
+  // 4. Contract-based features
+  if (hasColumn('contract')) {
+    recommendations.push({
+      id: 'contractRisk',
+      name: 'Contract Risk Score',
+      description: 'Risk score based on contract type (Month-to-month=High, One year=Medium, Two year=Low)',
+      impact: 'High',
+      reason: 'Contract type is a strong churn indicator',
+      checked: true
+    });
+  }
+  
+  // 5. Interaction features
+  if (hasColumn('tenure') && hasColumn('monthly')) {
+    recommendations.push({
+      id: 'tenureChargeInteraction',
+      name: 'Tenure-Charge Interaction',
+      description: 'Combined feature: (Tenure × Monthly Charges) / 100',
+      impact: 'Medium',
+      reason: 'Captures relationship between loyalty and spending',
+      checked: false
+    });
+  }
+  
+  log('✓ Identified ' + recommendations.length + ' potential engineered features', 'success');
+  displayFeatureEngineeringModal(recommendations);
+}
+
+function displayFeatureEngineeringModal(recommendations) {
   const parts = [];
+  
   parts.push('<div class="status-box">');
-  parts.push('<strong>🔬 Feature Engineering for Churn Prediction</strong><br>');
-  parts.push('Create new features from existing data to improve model performance. ');
-  parts.push('Research shows that engineered features can improve churn prediction accuracy by 5-15%.');
+  parts.push('<strong>🔬 Smart Feature Recommendations</strong><br>');
+  parts.push('Based on your dataset, we recommend creating these ' + recommendations.length + ' engineered features. ');
+  parts.push('Select the features you want to create (pre-selected features are highly recommended).');
   parts.push('</div>');
   
-  parts.push('<h4 style="margin: 20px 0;">Recommended Feature Engineering Techniques:</h4>');
+  parts.push('<div style="margin: 20px 0;">');
+  parts.push('<p style="margin-bottom: 15px;"><strong>Impact Legend:</strong> ');
+  parts.push('<span style="color: #dc3545;">●</span> High Impact | ');
+  parts.push('<span style="color: #ffc107;">●</span> Medium Impact | ');
+  parts.push('<span style="color: #28a745;">●</span> Low Impact');
+  parts.push('</p>');
+  parts.push('</div>');
   
-  parts.push('<div class="option-card" style="cursor: default; border-left-color: #667eea;">');
-  parts.push('<h4>✨ Features to be Created:</h4>');
-  parts.push('<ul style="margin: 10px 0 10px 20px;">');
-  parts.push('<li><strong>Tenure Groups:</strong> Categorize customers by tenure (New: 0-12 months, Mid: 13-36 months, Long: 36+ months)</li>');
-  parts.push('<li><strong>Charge Ratio:</strong> Monthly charges relative to total charges (spending velocity)</li>');
-  parts.push('<li><strong>Value Segment:</strong> Customer value based on monthly charges (Low, Medium, High)</li>');
-  parts.push('<li><strong>Service Count:</strong> Number of services used (OnlineSecurity, TechSupport, etc.)</li>');
-  parts.push('<li><strong>Contract Risk:</strong> Higher risk for month-to-month contracts</li>');
-  parts.push('<li><strong>Tenure-Charge Interaction:</strong> Relationship between how long they stay and how much they pay</li>');
-  parts.push('<li><strong>Average Monthly Spend:</strong> Total charges divided by tenure</li>');
-  parts.push('<li><strong>High Value Flag:</strong> Binary indicator for high-value customers</li>');
-  parts.push('</ul>');
+  parts.push('<div id="featureCheckboxes" style="max-height: 50vh; overflow-y: auto; padding: 10px; background: #f8f9fa; border-radius: 8px;">');
+  
+  recommendations.forEach((feature, idx) => {
+    const impactColor = feature.impact === 'High' ? '#dc3545' : feature.impact === 'Medium' ? '#ffc107' : '#28a745';
+    
+    parts.push('<div class="option-card" style="margin: 10px 0; cursor: default; border-left-color: ' + impactColor + ';">');
+    parts.push('<div style="display: flex; align-items: start; gap: 10px;">');
+    parts.push('<input type="checkbox" id="feature_' + feature.id + '" ' + (feature.checked ? 'checked' : '') + ' ');
+    parts.push('style="width: 20px; height: 20px; margin-top: 5px; cursor: pointer;">');
+    parts.push('<div style="flex: 1;">');
+    parts.push('<label for="feature_' + feature.id + '" style="cursor: pointer; display: block;">');
+    parts.push('<h4 style="margin: 0 0 5px 0; color: #2d3748;">');
+    parts.push('<span style="color: ' + impactColor + ';">●</span> ' + feature.name);
+    parts.push(' <span style="font-size: 0.75em; color: #6c757d;">(' + feature.impact + ' Impact)</span>');
+    parts.push('</h4>');
+    parts.push('<p style="margin: 5px 0; color: #4a5568;"><strong>What it does:</strong> ' + feature.description + '</p>');
+    parts.push('<p style="margin: 5px 0; color: #718096; font-size: 0.9em;"><strong>Why it helps:</strong> ' + feature.reason + '</p>');
+    parts.push('</label>');
+    parts.push('</div>');
+    parts.push('</div>');
+    parts.push('</div>');
+  });
+  
   parts.push('</div>');
   
   parts.push('<div style="margin: 20px 0; padding: 15px; background: #e7f3ff; border-radius: 8px; border-left: 4px solid #3182ce;">');
-  parts.push('<strong>📊 Expected Impact:</strong><br>');
+  parts.push('<strong>📊 Expected Benefits:</strong><br>');
   parts.push('• Improved model accuracy by 5-15%<br>');
   parts.push('• Better identification of at-risk customer segments<br>');
   parts.push('• More interpretable and actionable insights<br>');
@@ -645,10 +852,10 @@ function showFeatureEngineeringOptions() {
   parts.push('</div>');
   
   parts.push('<div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">');
-  parts.push('<button onclick="applyFeatureEngineering()" class="secondary" style="font-size: 1.1em; padding: 15px 30px;">');
-  parts.push('🚀 Apply Feature Engineering');
+  parts.push('<button onclick="applySelectedFeatures()" class="secondary" style="font-size: 1.1em; padding: 15px 30px;">');
+  parts.push('✅ Create Selected Features');
   parts.push('</button>');
-  parts.push('<button onclick="closeModal(\'featureEngineeringModal\')" style="background: #6c757d;">');
+  parts.push('<button onclick="closeModal(\'featureEngineeringModal\')" style="background: #6c757d; padding: 15px 30px;">');
   parts.push('Cancel');
   parts.push('</button>');
   parts.push('</div>');
@@ -657,8 +864,22 @@ function showFeatureEngineeringOptions() {
   openModal('featureEngineeringModal');
 }
 
-window.applyFeatureEngineering = function() {
-  log('Starting feature engineering...', 'info');
+window.applySelectedFeatures = function() {
+  // Get selected features
+  selectedFeatures = [];
+  const checkboxes = document.querySelectorAll('#featureCheckboxes input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    if (cb.checked) {
+      selectedFeatures.push(cb.id.replace('feature_', ''));
+    }
+  });
+  
+  if (selectedFeatures.length === 0) {
+    alert('⚠️ Please select at least one feature to create.');
+    return;
+  }
+  
+  log('Creating ' + selectedFeatures.length + ' selected features...', 'info');
   
   try {
     rawData.forEach(row => {
@@ -666,57 +887,118 @@ window.applyFeatureEngineering = function() {
       const monthly = parseFloat(row.MonthlyCharges || 0);
       const total = parseFloat(row.TotalCharges || 0);
       
-      // 1. Tenure Groups
-      if (tenure <= 12) {
-        row.TenureGroup = 'New';
-      } else if (tenure <= 36) {
-        row.TenureGroup = 'Mid';
-      } else {
-        row.TenureGroup = 'Long';
-      }
-      
-      // 2. Charge Ratio (spending velocity)
-      row.ChargeRatio = total > 0 ? (monthly / (total / tenure)).toFixed(2) : 0;
-      
-      // 3. Value Segment
-      if (monthly < 35) {
-        row.ValueSegment = 'Low';
-      } else if (monthly < 70) {
-        row.ValueSegment = 'Medium';
-      } else {
-        row.ValueSegment = 'High';
-      }
-      
-      // 4. Service Count
-      let serviceCount = 0;
-      if (row.OnlineSecurity === 'Yes') serviceCount++;
-      if (row.TechSupport === 'Yes') serviceCount++;
-      if (row.OnlineBackup === 'Yes' || row.OnlineBackup) serviceCount++;
-      if (row.DeviceProtection === 'Yes' || row.DeviceProtection) serviceCount++;
-      if (row.StreamingTV === 'Yes' || row.StreamingTV) serviceCount++;
-      if (row.StreamingMovies === 'Yes' || row.StreamingMovies) serviceCount++;
-      row.ServiceCount = serviceCount;
-      
-      // 5. Contract Risk Score
-      const contract = row.Contract || '';
-      if (contract.toLowerCase().includes('month')) {
-        row.ContractRisk = 3; // High risk
-      } else if (contract.toLowerCase().includes('one')) {
-        row.ContractRisk = 2; // Medium risk
-      } else {
-        row.ContractRisk = 1; // Low risk
-      }
-      
-      // 6. Tenure-Charge Interaction
-      row.TenureChargeInteraction = (tenure * monthly / 100).toFixed(2);
-      
-      // 7. Average Monthly Spend
-      row.AvgMonthlySpend = tenure > 0 ? (total / tenure).toFixed(2) : monthly;
-      
-      // 8. High Value Flag
-      row.HighValueFlag = monthly > 70 ? 1 : 0;
-      
-      // 9. Tenure in Years (if not exists)
+      selectedFeatures.forEach(featureId => {
+        switch(featureId) {
+          case 'tenureGroup':
+            if (tenure <= 12) row.TenureGroup = 'New';
+            else if (tenure <= 36) row.TenureGroup = 'Mid';
+            else row.TenureGroup = 'Long';
+            break;
+            
+          case 'tenureYears':
+            row.TenureYears = (tenure / 12).toFixed(2);
+            break;
+            
+          case 'chargeRatio':
+            row.ChargeRatio = total > 0 ? (monthly / (total / tenure)).toFixed(2) : 0;
+            break;
+            
+          case 'valueSegment':
+            if (monthly < 35) row.ValueSegment = 'Low';
+            else if (monthly < 70) row.ValueSegment = 'Medium';
+            else row.ValueSegment = 'High';
+            break;
+            
+          case 'serviceCount':
+            let count = 0;
+            if (row.OnlineSecurity === 'Yes') count++;
+            if (row.TechSupport === 'Yes') count++;
+            if (row.OnlineBackup === 'Yes' || row.OnlineBackup) count++;
+            if (row.DeviceProtection === 'Yes' || row.DeviceProtection) count++;
+            if (row.StreamingTV === 'Yes' || row.StreamingTV) count++;
+            if (row.StreamingMovies === 'Yes' || row.StreamingMovies) count++;
+            row.ServiceCount = count;
+            break;
+            
+          case 'contractRisk':
+            const contract = (row.Contract || '').toLowerCase();
+            if (contract.includes('month')) row.ContractRisk = 3;
+            else if (contract.includes('one')) row.ContractRisk = 2;
+            else row.ContractRisk = 1;
+            break;
+            
+          case 'tenureChargeInteraction':
+            row.TenureChargeInteraction = (tenure * monthly / 100).toFixed(2);
+            break;
+            
+          case 'avgMonthlySpend':
+            row.AvgMonthlySpend = tenure > 0 ? (total / tenure).toFixed(2) : monthly;
+            break;
+            
+          case 'highValueFlag':
+            row.HighValueFlag = monthly > 70 ? 1 : 0;
+            break;
+            
+          case 'paymentPerService':
+            const svcCount = row.ServiceCount || 1;
+            row.PaymentPerService = (monthly / svcCount).toFixed(2);
+            break;
+        }
+      });
+    });
+    
+    engineeredFeatures = true;
+    
+    log('✓ Successfully created ' + selectedFeatures.length + ' engineered features', 'success');
+    selectedFeatures.forEach(f => log('  ✓ ' + f, 'success'));
+    
+    closeModal('featureEngineeringModal');
+    
+    // Display summary
+    const featureNames = selectedFeatures.map(f => {
+      const names = {
+        tenureGroup: 'Tenure Groups',
+        tenureYears: 'Tenure Years',
+        chargeRatio: 'Charge Ratio',
+        valueSegment: 'Value Segment',
+        serviceCount: 'Service Count',
+        contractRisk: 'Contract Risk',
+        tenureChargeInteraction: 'Tenure-Charge Interaction',
+        avgMonthlySpend: 'Avg Monthly Spend',
+        highValueFlag: 'High Value Flag',
+        paymentPerService: 'Payment Per Service'
+      };
+      return names[f] || f;
+    });
+    
+    const parts = [];
+    parts.push('<div class="status-box success">');
+    parts.push('<strong>✅ Feature Engineering Complete!</strong><br>');
+    parts.push('Created ' + selectedFeatures.length + ' new features: ' + featureNames.join(', '));
+    parts.push('</div>');
+    $('engineeredFeaturesInfo').innerHTML = parts.join('');
+    
+    // Rerun preprocessing
+    log('Updating preprocessing with engineered features...', 'info');
+    processedData = preprocessData(rawData);
+    log('✓ Data preprocessing updated', 'success');
+    log('Total features for training: ' + processedData.train.xs.shape[1], 'info');
+    
+    // Update button
+    $('trainBtn').disabled = false;
+    $('featureEngineeringBtn').textContent = '✅ Features Created (' + selectedFeatures.length + ')';
+    $('featureEngineeringBtn').style.background = '#28a745';
+    $('featureEngineeringBtn').disabled = true;
+    
+  } catch (error) {
+    log('Error in feature engineering: ' + error.message, 'error');
+    console.error(error);
+  }
+}
+
+/* ========================================================================
+   STEP 2: MODEL TRAINING (Updated for engineered features)
+   ======================================================================== */// 9. Tenure in Years (if not exists)
       row.TenureYears = (tenure / 12).toFixed(2);
       
       // 10. Payment per Service
@@ -1025,37 +1307,69 @@ function preprocessData(data) {
       parseFloat(row.tenure || 0) / 12
     ];
     
-    // Add engineered features if they exist
-    if (engineeredFeatures) {
-      feature.push(
-        encodeTenureGroup(row.TenureGroup),
-        parseFloat(row.ChargeRatio || 0),
-        encodeValueSegment(row.ValueSegment),
-        parseFloat(row.ServiceCount || 0),
-        parseFloat(row.ContractRisk || 0),
-        parseFloat(row.TenureChargeInteraction || 0),
-        parseFloat(row.AvgMonthlySpend || 0),
-        parseFloat(row.HighValueFlag || 0),
-        parseFloat(row.TenureYears || 0),
-        parseFloat(row.PaymentPerService || 0)
-      );
+    // Add only the selected engineered features
+    if (engineeredFeatures && selectedFeatures.length > 0) {
+      selectedFeatures.forEach(featureId => {
+        switch(featureId) {
+          case 'tenureGroup':
+            feature.push(encodeTenureGroup(row.TenureGroup));
+            break;
+          case 'tenureYears':
+            feature.push(parseFloat(row.TenureYears || 0));
+            break;
+          case 'chargeRatio':
+            feature.push(parseFloat(row.ChargeRatio || 0));
+            break;
+          case 'valueSegment':
+            feature.push(encodeValueSegment(row.ValueSegment));
+            break;
+          case 'serviceCount':
+            feature.push(parseFloat(row.ServiceCount || 0));
+            break;
+          case 'contractRisk':
+            feature.push(parseFloat(row.ContractRisk || 0));
+            break;
+          case 'tenureChargeInteraction':
+            feature.push(parseFloat(row.TenureChargeInteraction || 0));
+            break;
+          case 'avgMonthlySpend':
+            feature.push(parseFloat(row.AvgMonthlySpend || 0));
+            break;
+          case 'highValueFlag':
+            feature.push(parseFloat(row.HighValueFlag || 0));
+            break;
+          case 'paymentPerService':
+            feature.push(parseFloat(row.PaymentPerService || 0));
+            break;
+        }
+      });
     }
     
     features.push(feature);
     labels.push(row.Churn === 'Yes' || row.Churn === '1' ? 1 : 0);
   });
   
-  if (engineeredFeatures) {
-    featureNames = [
-      'tenure', 'monthlyCharges', 'totalCharges', 'contract', 
-      'onlineSecurity', 'techSupport', 'internetService', 'tenureYears',
-      'tenureGroup', 'chargeRatio', 'valueSegment', 'serviceCount',
-      'contractRisk', 'tenureChargeInteraction', 'avgMonthlySpend', 
-      'highValueFlag', 'tenureYearsEngineered', 'paymentPerService'
-    ];
-  } else {
-    featureNames = ['tenure', 'monthlyCharges', 'totalCharges', 'contract', 
-                    'onlineSecurity', 'techSupport', 'internetService', 'tenureYears'];
+  // Build feature names based on what's included
+  featureNames = ['tenure', 'monthlyCharges', 'totalCharges', 'contract', 
+                  'onlineSecurity', 'techSupport', 'internetService', 'tenureYears'];
+  
+  if (engineeredFeatures && selectedFeatures.length > 0) {
+    const featureNameMap = {
+      tenureGroup: 'tenureGroup',
+      tenureYears: 'tenureYearsEngineered',
+      chargeRatio: 'chargeRatio',
+      valueSegment: 'valueSegment',
+      serviceCount: 'serviceCount',
+      contractRisk: 'contractRisk',
+      tenureChargeInteraction: 'tenureChargeInteraction',
+      avgMonthlySpend: 'avgMonthlySpend',
+      highValueFlag: 'highValueFlag',
+      paymentPerService: 'paymentPerService'
+    };
+    
+    selectedFeatures.forEach(featureId => {
+      featureNames.push(featureNameMap[featureId]);
+    });
   }
   
   const scaler = {};
@@ -1331,26 +1645,54 @@ $('predictBtn').onclick = async () => {
     
     let input = [tenure, monthly, total, contract, 1, 1, 1, tenure / 12];
     
-    // Add engineered features if they were used in training
-    if (engineeredFeatures) {
-      const tenureGroup = tenure <= 12 ? 0 : tenure <= 36 ? 1 : 2;
-      const chargeRatio = total > 0 ? (monthly / (total / tenure)) : 0;
-      const valueSegment = monthly < 35 ? 0 : monthly < 70 ? 1 : 2;
-      const serviceCount = 3; // Assuming some services
-      const contractRisk = contract === 0 ? 3 : contract === 1 ? 2 : 1;
-      const tenureChargeInteraction = (tenure * monthly / 100);
-      const avgMonthlySpend = tenure > 0 ? (total / tenure) : monthly;
-      const highValueFlag = monthly > 70 ? 1 : 0;
-      const tenureYears = tenure / 12;
-      const paymentPerService = serviceCount > 0 ? (monthly / serviceCount) : monthly;
-      
-      input.push(tenureGroup, chargeRatio, valueSegment, serviceCount, contractRisk,
-                 tenureChargeInteraction, avgMonthlySpend, highValueFlag, tenureYears, paymentPerService);
+    // Add selected engineered features if they were used in training
+    if (engineeredFeatures && selectedFeatures.length > 0) {
+      selectedFeatures.forEach(featureId => {
+        switch(featureId) {
+          case 'tenureGroup':
+            const tenureGroup = tenure <= 12 ? 0 : tenure <= 36 ? 1 : 2;
+            input.push(tenureGroup);
+            break;
+          case 'tenureYears':
+            input.push(tenure / 12);
+            break;
+          case 'chargeRatio':
+            const chargeRatio = total > 0 ? (monthly / (total / tenure)) : 0;
+            input.push(chargeRatio);
+            break;
+          case 'valueSegment':
+            const valueSegment = monthly < 35 ? 0 : monthly < 70 ? 1 : 2;
+            input.push(valueSegment);
+            break;
+          case 'serviceCount':
+            input.push(3); // Assuming some services
+            break;
+          case 'contractRisk':
+            const contractRisk = contract === 0 ? 3 : contract === 1 ? 2 : 1;
+            input.push(contractRisk);
+            break;
+          case 'tenureChargeInteraction':
+            input.push(tenure * monthly / 100);
+            break;
+          case 'avgMonthlySpend':
+            const avgMonthlySpend = tenure > 0 ? (total / tenure) : monthly;
+            input.push(avgMonthlySpend);
+            break;
+          case 'highValueFlag':
+            const highValueFlag = monthly > 70 ? 1 : 0;
+            input.push(highValueFlag);
+            break;
+          case 'paymentPerService':
+            const serviceCount = 3;
+            input.push(monthly / serviceCount);
+            break;
+        }
+      });
     }
     
     const normalized = input.map((val, idx) => {
       const scaleData = processedData.scaler[idx];
-      return scaleData.max > scaleData.min ? (val - scaleData.min) / (scaleData.max - scaleData.min) : 0;
+      return scaleData && scaleData.max > scaleData.min ? (val - scaleData.min) / (scaleData.max - scaleData.min) : 0;
     });
     
     const inputTensor = tf.tensor2d([normalized]);
