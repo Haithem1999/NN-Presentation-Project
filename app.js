@@ -600,18 +600,20 @@ function prepareData() {
 }
 
 function buildMLPModel() {
-  log('Building Multi-Layer Perceptron (MLP) model...');
+  log('Building Deeper Multi-Layer Perceptron (MLP) model...');
   
   const inputDim = processedData.train.x.shape[1];
   
-  // MLP Architecture Configuration
+  // Deeper MLP Architecture Configuration for Better Accuracy
   mlpArchitecture = {
-    modelType: 'Multi-Layer Perceptron (MLP)',
+    modelType: 'Deep Multi-Layer Perceptron (MLP)',
     layers: [
       { name: 'Input Layer', neurons: inputDim, activation: 'None', description: 'Receives normalized feature inputs' },
-      { name: 'Hidden Layer 1', neurons: 128, activation: 'ReLU', dropout: 0.3, description: 'First hidden layer with dropout regularization' },
-      { name: 'Hidden Layer 2', neurons: 64, activation: 'ReLU', dropout: 0.3, description: 'Second hidden layer with dropout' },
-      { name: 'Hidden Layer 3', neurons: 32, activation: 'ReLU', dropout: 0.2, description: 'Third hidden layer with reduced dropout' },
+      { name: 'Hidden Layer 1', neurons: 256, activation: 'ReLU', dropout: 0.4, description: 'First hidden layer with increased capacity' },
+      { name: 'Hidden Layer 2', neurons: 128, activation: 'ReLU', dropout: 0.3, description: 'Second hidden layer for pattern learning' },
+      { name: 'Hidden Layer 3', neurons: 64, activation: 'ReLU', dropout: 0.3, description: 'Third hidden layer for feature refinement' },
+      { name: 'Hidden Layer 4', neurons: 32, activation: 'ReLU', dropout: 0.2, description: 'Fourth hidden layer for deep representations' },
+      { name: 'Hidden Layer 5', neurons: 16, activation: 'ReLU', dropout: 0.2, description: 'Fifth hidden layer for final feature extraction' },
       { name: 'Output Layer', neurons: 1, activation: 'Sigmoid', description: 'Binary classification output (0-1)' }
     ],
     totalParameters: null,
@@ -621,37 +623,58 @@ function buildMLPModel() {
       description: 'Adaptive Moment Estimation - efficient for deep networks'
     },
     lossFunction: 'Binary Crossentropy',
-    regularization: ['Dropout (0.2-0.3)', 'Early Stopping']
+    regularization: ['Dropout (0.2-0.4)', 'L2 Weight Decay']
   };
   
-  // Build model
+  // Build deeper model
   const model = tf.sequential();
   
-  // Input + Hidden Layer 1
+  // Input + Hidden Layer 1 (256 neurons)
   model.add(tf.layers.dense({
     inputShape: [inputDim],
+    units: 256,
+    activation: 'relu',
+    kernelInitializer: 'heNormal',
+    kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }),
+    name: 'hidden_layer_1'
+  }));
+  model.add(tf.layers.dropout({ rate: 0.4 }));
+  
+  // Hidden Layer 2 (128 neurons)
+  model.add(tf.layers.dense({
     units: 128,
     activation: 'relu',
     kernelInitializer: 'heNormal',
-    name: 'hidden_layer_1'
-  }));
-  model.add(tf.layers.dropout({ rate: 0.3 }));
-  
-  // Hidden Layer 2
-  model.add(tf.layers.dense({
-    units: 64,
-    activation: 'relu',
-    kernelInitializer: 'heNormal',
+    kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }),
     name: 'hidden_layer_2'
   }));
   model.add(tf.layers.dropout({ rate: 0.3 }));
   
-  // Hidden Layer 3
+  // Hidden Layer 3 (64 neurons)
+  model.add(tf.layers.dense({
+    units: 64,
+    activation: 'relu',
+    kernelInitializer: 'heNormal',
+    kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }),
+    name: 'hidden_layer_3'
+  }));
+  model.add(tf.layers.dropout({ rate: 0.3 }));
+  
+  // Hidden Layer 4 (32 neurons)
   model.add(tf.layers.dense({
     units: 32,
     activation: 'relu',
     kernelInitializer: 'heNormal',
-    name: 'hidden_layer_3'
+    name: 'hidden_layer_4'
+  }));
+  model.add(tf.layers.dropout({ rate: 0.2 }));
+  
+  // Hidden Layer 5 (16 neurons)
+  model.add(tf.layers.dense({
+    units: 16,
+    activation: 'relu',
+    kernelInitializer: 'heNormal',
+    name: 'hidden_layer_5'
   }));
   model.add(tf.layers.dropout({ rate: 0.2 }));
   
@@ -672,30 +695,30 @@ function buildMLPModel() {
   // Calculate total parameters
   mlpArchitecture.totalParameters = model.countParams();
   
-  log(`MLP model built: ${mlpArchitecture.totalParameters.toLocaleString()} parameters`, 'success');
-  log(`Architecture: Input(${inputDim}) → 128 → 64 → 32 → Output(1)`, 'info');
+  log(`Deep MLP model built: ${mlpArchitecture.totalParameters.toLocaleString()} parameters`, 'success');
+  log(`Architecture: Input(${inputDim}) → 256 → 128 → 64 → 32 → 16 → Output(1)`, 'info');
   
   return model;
 }
 
 async function trainModel() {
-  log('Training MLP model...');
+  log('Training Deep MLP model with 50 epochs...');
   
   const history = await model.fit(processedData.train.x, processedData.train.y, {
-    epochs: 100,
+    epochs: 50,
     batchSize: 32,
     validationSplit: 0.2,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
-        if (epoch % 10 === 0) {
-          log(`Epoch ${epoch + 1}: loss=${logs.loss.toFixed(4)}, acc=${logs.acc.toFixed(4)}, val_acc=${logs.val_acc.toFixed(4)}`);
+        if (epoch % 5 === 0) {
+          log(`Epoch ${epoch + 1}/50: loss=${logs.loss.toFixed(4)}, acc=${logs.acc.toFixed(4)}, val_acc=${logs.val_acc.toFixed(4)}`);
         }
       }
     }
   });
   
   trainingHistory = history;
-  log('Model training completed', 'success');
+  log('Model training completed - 50 epochs', 'success');
 }
 
 async function evaluateModel() {
@@ -884,7 +907,7 @@ function performPostTrainingAnalysis() {
     <div class="analysis-grid">
       <!-- MLP Architecture Details -->
       <div class="analysis-card">
-        <h4>🧠 MLP Architecture Details</h4>
+        <h4>🧠 Deep MLP Architecture Details</h4>
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
           <strong style="color: #667eea;">Model Type:</strong> ${mlpArchitecture.modelType}<br><br>
           <strong style="color: #667eea;">Total Parameters:</strong> ${mlpArchitecture.totalParameters.toLocaleString()}<br><br>
@@ -938,10 +961,8 @@ function performPostTrainingAnalysis() {
         </div>
         
         <div class="insight-item">
-          <strong>Training Stability:</strong><br>
-          Model trained for ${trainingHistory.params.epochs} epochs with batch size ${trainingHistory.params.batchSize}.
-          ${trainingHistory.history.val_acc ? 
-            'Validation accuracy tracked for overfitting prevention.' : ''}
+          <strong>Training Configuration:</strong><br>
+          Trained for 50 epochs with batch size 32. Deep architecture with 5 hidden layers enables learning complex customer behavior patterns.
         </div>
       </div>
       
@@ -964,32 +985,32 @@ function performPostTrainingAnalysis() {
         </div>
         
         <div class="insight-item">
-          <strong>Cost-Benefit Ratio:</strong><br>
+          <strong>Campaign Efficiency:</strong><br>
           With ${tp} correct predictions and ${fp} false alarms, retention campaign efficiency is ${((tp/(tp+fp))*100).toFixed(1)}%.
         </div>
       </div>
       
-      <!-- Recommendations -->
+      <!-- Technical Recommendations -->
       <div class="analysis-card">
-        <h4>🎯 Action Recommendations</h4>
-        <div class="insight-item">
-          <strong>High Priority:</strong><br>
-          Focus retention efforts on the ${tp} correctly identified at-risk customers for maximum ROI.
-        </div>
-        
+        <h4>🎯 Technical Recommendations</h4>
         <div class="insight-item">
           <strong>Model Monitoring:</strong><br>
-          Retrain model quarterly or when accuracy drops below 85% to maintain performance.
+          Track model performance monthly. Retrain when accuracy drops below 85% or data distribution shifts.
         </div>
         
         <div class="insight-item">
           <strong>Feature Engineering:</strong><br>
-          Review top 10 important features. Consider collecting additional data on these dimensions.
+          Review top 10 important features. Consider collecting additional behavioral data on these dimensions.
         </div>
         
         <div class="insight-item">
-          <strong>Threshold Tuning:</strong><br>
+          <strong>Threshold Optimization:</strong><br>
           Current threshold: 0.5. Adjust based on business cost of false positives vs false negatives.
+        </div>
+        
+        <div class="insight-item">
+          <strong>Deep Architecture Benefits:</strong><br>
+          5-layer MLP enables capturing non-linear interactions between customer features for better predictions.
         </div>
       </div>
     </div>
