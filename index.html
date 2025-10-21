@@ -148,6 +148,10 @@
       background: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
     }
     
+    button.info {
+      background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    }
+    
     .status-box {
       background: white;
       padding: 15px;
@@ -248,58 +252,29 @@
       margin: 15px 0;
     }
     
-    /* ENHANCED FEATURE IMPORTANCE STYLES */
     .feature-importance {
-      margin: 20px 0;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-    }
-    
-    .feature-importance h3 {
-      color: #667eea;
-      margin-bottom: 20px;
-      font-size: 1.3em;
+      margin: 15px 0;
     }
     
     .feature-bar {
-      background: #f8f9fa;
-      height: 50px;
-      border-radius: 8px;
-      margin: 15px 0;
+      background: #e9ecef;
+      height: 30px;
+      border-radius: 5px;
+      margin: 8px 0;
       position: relative;
       overflow: hidden;
-      display: flex;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .feature-bar-label {
-      position: absolute;
-      left: 15px;
-      color: #2d3748;
-      font-weight: 700;
-      font-size: 1.1em;
-      z-index: 2;
-      text-shadow: 0 0 3px white, 0 0 5px white;
     }
     
     .feature-bar-fill {
       background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
       height: 100%;
-      transition: width 0.8s ease;
+      transition: width 0.5s ease;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
-      padding-right: 15px;
-    }
-    
-    .feature-bar-value {
+      padding: 0 10px;
       color: white;
-      font-size: 1.2em;
-      font-weight: 800;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
-      z-index: 2;
+      font-size: 0.85em;
+      font-weight: 600;
     }
     
     .eda-section {
@@ -398,6 +373,13 @@
     .quality-status.warning { background: #feebc8; color: #7c2d12; }
     .quality-status.bad { background: #fed7d7; color: #742a2a; }
     
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 15px 0;
+    }
+    
     .data-table {
       width: 100%;
       border-collapse: collapse;
@@ -493,6 +475,11 @@
       transform: translateX(5px);
     }
     
+    .option-card.selected {
+      background: #e7f3ff;
+      border-left-color: #3182ce;
+    }
+    
     .recommendation-badge {
       background: #48bb78;
       color: white;
@@ -502,274 +489,6 @@
       margin-left: 10px;
     }
     
-    /* ENHANCED DATASET VIEWER STYLES */
-    .dataset-viewer {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin: 20px 0;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      border: 2px solid #e9ecef;
-    }
-    
-    .dataset-viewer h3 {
-      color: #667eea;
-      margin-bottom: 15px;
-      font-size: 1.3em;
-    }
-    
-    .dataset-controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    
-    .dataset-info {
-      background: #e7f3ff;
-      padding: 10px 15px;
-      border-radius: 5px;
-      color: #0066cc;
-      font-weight: 600;
-      margin-bottom: 15px;
-      border-left: 4px solid #0066cc;
-    }
-    
-    .dataset-table-container {
-      max-height: 500px;
-      overflow: auto;
-      border: 2px solid #e9ecef;
-      border-radius: 8px;
-      background: white;
-    }
-    
-    .dataset-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9em;
-    }
-    
-    .dataset-table thead {
-      position: sticky;
-      top: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      z-index: 10;
-    }
-    
-    .dataset-table th {
-      color: white;
-      padding: 12px 10px;
-      text-align: left;
-      font-weight: 700;
-      border-right: 1px solid rgba(255,255,255,0.2);
-      font-size: 0.95em;
-    }
-    
-    .dataset-table td {
-      padding: 10px;
-      border-bottom: 1px solid #e9ecef;
-      border-right: 1px solid #f0f0f0;
-      color: #2d3748;
-    }
-    
-    .dataset-table tbody tr:hover {
-      background: #f8f9fa;
-    }
-    
-    .dataset-table tbody tr:nth-child(even) {
-      background: #fafbfc;
-    }
-    
-    /* VARIABLE SELECTOR STYLES */
-    .variable-selector {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin: 20px 0;
-      border: 2px solid #e9ecef;
-    }
-    
-    .variable-selector h4 {
-      color: #667eea;
-      margin-bottom: 15px;
-      font-size: 1.1em;
-    }
-    
-    .variable-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-      margin-top: 15px;
-    }
-    
-    .variable-option {
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      border: 2px solid #e9ecef;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .variable-option:hover {
-      background: #e9ecef;
-      border-color: #667eea;
-      transform: translateY(-2px);
-    }
-    
-    .variable-option.selected {
-      background: #e7f3ff;
-      border-color: #667eea;
-      border-width: 3px;
-    }
-    
-    .variable-checkbox {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #667eea;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    
-    .variable-option.selected .variable-checkbox {
-      background: #667eea;
-      color: white;
-    }
-    
-    .variable-option.selected .variable-checkbox:after {
-      content: "✓";
-      font-weight: bold;
-    }
-    
-    /* CONFUSION MATRIX STYLES */
-    .confusion-matrix {
-      display: grid;
-      grid-template-columns: 100px repeat(2, 1fr);
-      grid-template-rows: 50px repeat(2, 1fr);
-      gap: 10px;
-      max-width: 500px;
-      margin: 20px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-    }
-    
-    .confusion-cell {
-      background: white;
-      padding: 20px;
-      text-align: center;
-      border-radius: 8px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .confusion-cell.header {
-      background: #667eea;
-      color: white;
-      font-size: 0.9em;
-      font-weight: 700;
-    }
-    
-    .confusion-cell.corner {
-      background: transparent;
-      box-shadow: none;
-    }
-    
-    .confusion-cell.row-label {
-      background: #e9ecef;
-      color: #2d3748;
-      font-weight: 700;
-    }
-    
-    .confusion-cell.tp {
-      background: #c6f6d5;
-      color: #22543d;
-      font-size: 1.8em;
-    }
-    
-    .confusion-cell.tn {
-      background: #c6f6d5;
-      color: #22543d;
-      font-size: 1.8em;
-    }
-    
-    .confusion-cell.fp {
-      background: #fed7d7;
-      color: #742a2a;
-      font-size: 1.8em;
-    }
-    
-    .confusion-cell.fn {
-      background: #fed7d7;
-      color: #742a2a;
-      font-size: 1.8em;
-    }
-    
-    /* BATCH UPLOAD STYLES */
-    .batch-upload {
-      background: #e7f3ff;
-      padding: 20px;
-      border-radius: 10px;
-      margin: 15px 0;
-      border-left: 5px solid #3182ce;
-    }
-    
-    .batch-upload h4 {
-      color: #3182ce;
-      margin-bottom: 10px;
-      font-size: 1.1em;
-    }
-    
-    .batch-upload p {
-      margin-bottom: 10px;
-      color: #2d3748;
-    }
-    
-    /* POST-TRAINING ANALYSIS STYLES */
-    .analysis-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      margin: 20px 0;
-    }
-    
-    .analysis-card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      border-left: 5px solid #667eea;
-    }
-    
-    .analysis-card h4 {
-      color: #667eea;
-      margin-bottom: 15px;
-      font-size: 1.2em;
-    }
-    
-    .insight-item {
-      background: #f8f9fa;
-      padding: 12px;
-      border-radius: 8px;
-      margin: 10px 0;
-      border-left: 3px solid #48bb78;
-    }
-    
-    .insight-item strong {
-      color: #2d3748;
-    }
-    
     @media (max-width: 768px) {
       .main-content {
         grid-template-columns: 1fr;
@@ -777,9 +496,6 @@
       .modal-content {
         width: 95%;
         margin: 10% auto;
-      }
-      .variable-grid {
-        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -810,22 +526,6 @@
           <input type="file" id="dataFile" accept=".csv">
         </div>
         <button id="loadDataBtn">Load & Analyze Data</button>
-        <button id="viewDatasetBtn" style="display: none;" class="secondary">📋 View Dataset</button>
-        
-        <!-- Dataset Viewer -->
-        <div id="datasetViewer" class="dataset-viewer" style="display: none;">
-          <h3>📋 Dataset Viewer</h3>
-          <div class="dataset-controls">
-            <button class="secondary" onclick="displayDataset('all')">Show All Data</button>
-            <button class="secondary" onclick="displayDataset('first10')">First 10 Rows</button>
-            <button class="secondary" onclick="displayDataset('last10')">Last 10 Rows</button>
-            <button class="danger" onclick="closeDatasetViewer()">Close Viewer</button>
-          </div>
-          <div id="datasetInfo" class="dataset-info"></div>
-          <div class="dataset-table-container">
-            <table class="dataset-table" id="datasetTable"></table>
-          </div>
-        </div>
         
         <!-- Quick Overview -->
         <div id="quickOverview"></div>
@@ -849,30 +549,12 @@
         <div id="numerical" class="eda-content eda-section">
           <h3>📊 Numerical Variables Analysis</h3>
           <div id="numericalContent"></div>
-          
-          <!-- Variable Selector -->
-          <div class="variable-selector">
-            <h4>Select Additional Variables to Visualize:</h4>
-            <p style="color: #6c757d; margin-bottom: 10px;">Click on variables to select/deselect them for visualization</p>
-            <div id="numericalVariableSelector" class="variable-grid"></div>
-            <button class="secondary" style="margin-top: 15px;" onclick="visualizeSelectedNumerical()">📊 Visualize Selected Variables</button>
-          </div>
-          <div id="additionalNumericalCharts"></div>
         </div>
         
         <!-- Categorical Analysis Tab -->
         <div id="categorical" class="eda-content eda-section">
           <h3>📁 Categorical Variables Analysis</h3>
           <div id="categoricalContent"></div>
-          
-          <!-- Variable Selector -->
-          <div class="variable-selector">
-            <h4>Select Additional Variables to Visualize:</h4>
-            <p style="color: #6c757d; margin-bottom: 10px;">Click on variables to select/deselect them for visualization</p>
-            <div id="categoricalVariableSelector" class="variable-grid"></div>
-            <button class="secondary" style="margin-top: 15px;" onclick="visualizeSelectedCategorical()">📊 Visualize Selected Variables</button>
-          </div>
-          <div id="additionalCategoricalCharts"></div>
         </div>
         
         <!-- Correlations Tab -->
@@ -892,9 +574,8 @@
       <div class="section">
         <h2>🧠 Step 2: Neural Network Training</h2>
         <div class="status-box">
-          <strong>Model:</strong> Enhanced Deep Neural Network with Batch Normalization<br>
-          <strong>Architecture:</strong> Multi-layer perceptron with dropout & L2 regularization<br>
-          <strong>Target Accuracy:</strong> 93-95%
+          <strong>Model:</strong> Deep Neural Network with Dropout & Regularization<br>
+          <strong>Technique:</strong> Multi-layer perceptron optimized for imbalanced data
         </div>
         <button id="trainBtn" disabled>Train Churn Prediction Model</button>
         <button id="visualizeBtn">Visualize Training</button>
@@ -905,63 +586,32 @@
       <!-- Real-time Prediction -->
       <div class="section">
         <h2>🔮 Step 3: Real-Time Churn Prediction</h2>
-        
-        <!-- Single Prediction -->
-        <div style="border: 2px solid #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-          <h4 style="color: #667eea; margin-bottom: 10px;">Single Customer Prediction</h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
-            <div>
-              <label>Tenure (months):</label>
-              <input type="number" id="tenure" value="12" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-            </div>
-            <div>
-              <label>Monthly Charges ($):</label>
-              <input type="number" id="monthlyCharges" value="70" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-            </div>
-            <div>
-              <label>Total Charges ($):</label>
-              <input type="number" id="totalCharges" value="840" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-            </div>
-            <div>
-              <label>Contract Type:</label>
-              <select id="contract" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
-                <option value="0">Month-to-month</option>
-                <option value="1">One year</option>
-                <option value="2">Two year</option>
-              </select>
-            </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
+          <div>
+            <label>Tenure (months):</label>
+            <input type="number" id="tenure" value="12" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
           </div>
-          <button id="predictBtn" disabled>Predict Churn Risk</button>
-        </div>
-        
-        <!-- Batch Prediction -->
-        <div class="batch-upload">
-          <h4>📊 Batch Prediction from CSV</h4>
-          <p>Upload a CSV file with customer data to predict churn for multiple customers at once</p>
-          <input type="file" id="batchPredictionFile" accept=".csv" style="margin-bottom: 10px;">
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button id="batchPredictFromFileBtn" disabled class="secondary">Predict from Uploaded CSV</button>
-            <button id="batchPredictBtn" disabled class="secondary">Predict Top 10 At-Risk (from training data)</button>
+          <div>
+            <label>Monthly Charges ($):</label>
+            <input type="number" id="monthlyCharges" value="70" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+          </div>
+          <div>
+            <label>Total Charges ($):</label>
+            <input type="number" id="totalCharges" value="840" min="0" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+          </div>
+          <div>
+            <label>Contract Type:</label>
+            <select id="contract" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+              <option value="0">Month-to-month</option>
+              <option value="1">One year</option>
+              <option value="2">Two year</option>
+            </select>
           </div>
         </div>
+        <button id="predictBtn" disabled>Predict Churn Risk</button>
+        <button id="batchPredictBtn" disabled>Batch Prediction (Top 10)</button>
         
         <div id="predictionResults"></div>
-      </div>
-      
-      <!-- Feature Importance -->
-      <div class="section">
-        <h2>📈 Feature Importance Analysis</h2>
-        <div id="featureImportance" class="feature-importance">
-          <p style="color: #6c757d; text-align: center; padding: 20px;">Train the model to see feature importance</p>
-        </div>
-      </div>
-      
-      <!-- Model Performance -->
-      <div class="section">
-        <h2>🎯 Model Performance Metrics</h2>
-        <div class="chart-container">
-          <canvas id="metricsChart"></canvas>
-        </div>
       </div>
       
       <!-- Logs -->
@@ -970,11 +620,17 @@
         <div id="logs"></div>
       </div>
       
-      <!-- Post-Training Analysis -->
-      <div class="section full-width">
-        <h2>🔬 Post-Training Analysis & Model Interpretability</h2>
-        <div id="postTrainingAnalysis">
-          <p style="color: #6c757d; text-align: center; padding: 20px;">Complete model training to see detailed analysis and insights</p>
+      <!-- Feature Importance -->
+      <div class="section">
+        <h2>📈 Feature Importance Analysis</h2>
+        <div id="featureImportance"></div>
+      </div>
+      
+      <!-- Model Performance -->
+      <div class="section">
+        <h2>🎯 Model Performance Metrics</h2>
+        <div class="chart-container">
+          <canvas id="metricsChart"></canvas>
         </div>
       </div>
     </div>
