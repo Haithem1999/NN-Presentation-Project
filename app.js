@@ -25,7 +25,7 @@ let charts = {};
    UTILITY FUNCTIONS
    ======================================================================== */
 
-window.showEDATab = function(tabName) {
+window.showEDATab = function(tabName, event) {
   document.querySelectorAll('.eda-content').forEach(tab => {
     tab.classList.remove('active');
   });
