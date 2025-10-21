@@ -801,7 +801,7 @@ function displayFeatureEngineeringModal(recommendations) {
   parts.push('</p>');
   parts.push('</div>');
   
-  parts.push('<div id="featureCheckboxes" style="max-height: 50vh; overflow-y: auto; padding: 10px; background: #f8f9fa; border-radius: 8px;">');
+  parts.push('<div id="featureCheckboxes" style="max-height: 400px; overflow-y: scroll; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 2px solid #dee2e6;">');
   
   recommendations.forEach((feature, idx) => {
     const impactColor = feature.impact === 'High' ? '#dc3545' : feature.impact === 'Medium' ? '#ffc107' : '#28a745';
@@ -834,7 +834,7 @@ function displayFeatureEngineeringModal(recommendations) {
   parts.push('• Enhanced pattern recognition in customer behavior');
   parts.push('</div>');
   
-  parts.push('<div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">');
+  parts.push('<div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px; position: sticky; bottom: 0; background: white; padding: 15px 0; border-top: 2px solid #dee2e6;">');
   parts.push('<button onclick="applySelectedFeatures()" class="secondary" style="font-size: 1.1em; padding: 15px 30px;">');
   parts.push('✅ Create Selected Features');
   parts.push('</button>');
@@ -1548,29 +1548,70 @@ function createMetricsChart(accuracy, precision, recall, f1) {
 }
 
 function calculateFeatureImportance() {
-  const importance = [
-    { name: 'Tenure', value: 0.28 },
-    { name: 'Monthly Charges', value: 0.22 },
-    { name: 'Contract Type', value: 0.18 },
-    { name: 'Total Charges', value: 0.15 },
-    { name: 'Tech Support', value: 0.08 },
-    { name: 'Online Security', value: 0.05 },
-    { name: 'Internet Service', value: 0.04 }
-  ];
+  log('Calculating feature importance using SHAP-like technique...', 'info');
+  
+  // Sample a subset of test data for SHAP calculation
+  const sampleSize = Math.min(100, processedData.test.xs.shape[0]);
+  const testData = processedData.test.xs.arraySync().slice(0, sampleSize);
+  
+  // Calculate baseline prediction (average of all predictions)
+  const allPredictions = model.predict(processedData.test.xs);
+  const baselinePred = tf.mean(allPredictions).arraySync();
+  allPredictions.dispose();
+  
+  // Calculate SHAP values for each feature
+  const shapValues = [];
+  const numFeatures = testData[0].length;
+  
+  for (let featureIdx = 0; featureIdx < numFeatures; featureIdx++) {
+    let totalContribution = 0;
+    
+    // For each sample, calculate the marginal contribution of this feature
+    for (let sampleIdx = 0; sampleIdx < sampleSize; sampleIdx++) {
+      const sample = testData[sampleIdx].slice();
+      
+      // Get prediction with feature
+      const predWith = model.predict(tf.tensor2d([sample])).arraySync()[0][0];
+      
+      // Get prediction without feature (set to median/baseline)
+      const sampleWithout = sample.slice();
+      sampleWithout[featureIdx] = 0.5; // Neutral value for normalized feature
+      const predWithout = model.predict(tf.tensor2d([sampleWithout])).arraySync()[0][0];
+      
+      // Marginal contribution
+      totalContribution += Math.abs(predWith - predWithout);
+    }
+    
+    shapValues.push(totalContribution / sampleSize);
+  }
+  
+  // Normalize to percentages
+  const totalImportance = shapValues.reduce((a, b) => a + b, 0);
+  const normalizedImportance = shapValues.map(v => v / totalImportance);
+  
+  // Map to feature names and sort
+  const importance = featureNames.map((name, idx) => ({
+    name: name,
+    value: normalizedImportance[idx]
+  })).sort((a, b) => b.value - a.value);
+  
+  log('✓ Feature importance calculated using SHAP technique', 'success');
   
   const parts = [];
   parts.push('<div class="feature-importance">');
-  importance.forEach(feat => {
-    parts.push('<div class="feature-bar">');
-    parts.push('<div class="feature-bar-fill" style="width: ' + (feat.value * 100) + '%">');
-    parts.push(feat.name + ': ' + (feat.value * 100).toFixed(1) + '%');
+  importance.forEach((feat, idx) => {
+    const percentage = (feat.value * 100).toFixed(1);
+    parts.push('<div class="feature-bar" title="' + feat.name + ': ' + percentage + '%">');
+    parts.push('<div class="feature-bar-fill" style="width: ' + percentage + '%">');
+    parts.push('<span style="font-size: 0.7em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">');
+    parts.push(feat.name + ': ' + percentage + '%');
+    parts.push('</span>');
     parts.push('</div>');
     parts.push('</div>');
   });
   parts.push('</div>');
   
   $('featureImportance').innerHTML = parts.join('');
-  log('✓ Feature importance calculated', 'success');
 }
 
 /* ========================================================================
