@@ -525,8 +525,10 @@
           <label>Upload Customer Dataset (CSV)</label>
           <input type="file" id="dataFile" accept=".csv">
         </div>
-        <button id="loadDataBtn">Load & Analyze Data</button>
-        <button id="featureEngineeringBtn" disabled style="margin-left: 10px;">⚙️ Feature Engineering</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button id="loadDataBtn">Load & Analyze Data</button>
+          <button id="viewDataBtn" disabled style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">📋 View Dataset</button>
+        </div>
         
         <!-- Quick Overview -->
         <div id="quickOverview"></div>
@@ -569,6 +571,16 @@
           <h3>🎯 Target Variable (Churn) Analysis</h3>
           <div id="churnAnalysisContent"></div>
         </div>
+      </div>
+      
+      <!-- Feature Engineering Section -->
+      <div class="section full-width">
+        <h2>⚙️ Step 1.5: Feature Engineering (Optional but Recommended)</h2>
+        <div class="status-box">
+          <strong>💡 Enhance Your Model:</strong> Create new features from existing data to improve prediction accuracy by 5-15%
+        </div>
+        <button id="featureEngineeringBtn" disabled>🔬 Start Feature Engineering</button>
+        <div id="engineeredFeaturesInfo" style="margin-top: 15px;"></div>
       </div>
       
       <!-- Model Training -->
@@ -661,12 +673,29 @@
   
   <!-- Modal for Feature Engineering -->
   <div id="featureEngineeringModal" class="modal">
-    <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-content" style="max-width: 900px;">
       <div class="modal-header">
-        <h3>⚙️ Feature Engineering</h3>
+        <h3>⚙️ Feature Engineering - Select Features to Create</h3>
         <span class="close-modal" onclick="closeModal('featureEngineeringModal')">&times;</span>
       </div>
       <div id="featureEngineeringContent"></div>
+    </div>
+  </div>
+  
+  <!-- Modal for Data View -->
+  <div id="dataViewModal" class="modal">
+    <div class="modal-content" style="max-width: 95%; max-height: 90vh;">
+      <div class="modal-header">
+        <h3>📋 Dataset View</h3>
+        <span class="close-modal" onclick="closeModal('dataViewModal')">&times;</span>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label style="font-weight: 600; margin-right: 10px;">Display Options:</label>
+        <button onclick="displayDataset('all')" class="secondary">Show All Rows</button>
+        <button onclick="displayDataset('first10')" class="secondary">First 10 Rows</button>
+        <button onclick="displayDataset('last10')" class="secondary">Last 10 Rows</button>
+      </div>
+      <div id="dataTableContainer" style="max-height: 60vh; overflow: auto; border: 1px solid #ddd; border-radius: 8px;"></div>
     </div>
   </div>
   
