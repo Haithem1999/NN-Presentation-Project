@@ -526,6 +526,7 @@
           <input type="file" id="dataFile" accept=".csv">
         </div>
         <button id="loadDataBtn">Load & Analyze Data</button>
+        <button id="featureEngineeringBtn" disabled style="margin-left: 10px;">⚙️ Feature Engineering</button>
         
         <!-- Quick Overview -->
         <div id="quickOverview"></div>
@@ -655,6 +656,17 @@
         <span class="close-modal" onclick="closeModal('duplicatesModal')">&times;</span>
       </div>
       <div id="duplicatesOptions"></div>
+    </div>
+  </div>
+  
+  <!-- Modal for Feature Engineering -->
+  <div id="featureEngineeringModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3>⚙️ Feature Engineering</h3>
+        <span class="close-modal" onclick="closeModal('featureEngineeringModal')">&times;</span>
+      </div>
+      <div id="featureEngineeringContent"></div>
     </div>
   </div>
   
