@@ -1439,42 +1439,85 @@ $('trainBtn').onclick = async () => {
     return;
   }
   
+  const inputShape = processedData.train.xs.shape[1];
+  log('Input features: ' + inputShape + (engineeredFeatures ? ' (with engineered features)' : ' (original features)'), 'info');
+  
+  log('Building Neural Network model...', 'info');
+  
+  model = tf.sequential({
+    layers: [
+      tf.layers.dense({ 
+        inputShape: [inputShape], 
+        units: 128, 
+        activation: 'relu',
+        kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
+      }),
+      tf.layers.dropout({ rate: 0.3 }),
+      tf.layers.dense({ 
+        units: 64, 
+        activation: 'relu',
+        kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
+      }),
+      tf.layers.dropout({ rate: 0.25 }),
+      tf.layers.dense({ 
+        units: 32, 
+        activation: 'relu' 
+      }),
+      tf.layers.dropout({ rate: 0.2 }),
+      tf.layers.dense({ 
+        units: 16, 
+        activation: 'relu' 
+      }),
+      tf.layers.dense({ 
+        units: 1, 
+        activation: 'sigmoid' 
+      })
+    ]
+  });
+  
+  model.compile({
+    optimizer: tf.train.adam(0.001),
+    loss: 'binaryCrossentropy',
+    metrics: ['accuracy']
+  });
+  
+  log('✓ Model architecture created', 'success');
+  log('Training model... (this may take 1-2 minutes)', 'info');
+  
   try {
-    log('Building Neural Network model...', 'info');
-    
-    const inputShape = processedData.train.xs.shape[1];
-    log('Input features: ' + inputShape + (engineeredFeatures ? ' (with engineered features)' : ' (original features)'), 'info');
-    
-    model = tf.sequential({
-      layers: [
-        tf.layers.dense({ 
-          inputShape: [inputShape], 
-          units: 128, 
-          activation: 'relu',
-          kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
-        }),
-        tf.layers.dropout({ rate: 0.3 }),
-        tf.layers.dense({ 
-          units: 64, 
-          activation: 'relu',
-          kernelRegularizer: tf.regularizers.l2({ l2: 0.01 })
-        }),
-        tf.layers.dropout({ rate: 0.25 }),
-        tf.layers.dense({ 
-          units: 32, 
-          activation: 'relu' 
-        }),
-        tf.layers.dropout({ rate: 0.2 }),
-        tf.layers.dense({ 
-          units: 16, 
-          activation: 'relu' 
-        }),
-        tf.layers.dense({ 
-          units: 1, 
-          activation: 'sigmoid' 
-        })
-      ]
+    await model.fit(processedData.train.xs, processedData.train.ys, {
+      epochs: 50,
+      batchSize: 32,
+      validationSplit: 0.2,
+      callbacks: {
+        onEpochEnd: (epoch, logs) => {
+          if ((epoch + 1) % 10 === 0) {
+            log('Epoch ' + (epoch + 1) + '/50 - loss: ' + logs.loss.toFixed(4) + ', acc: ' + logs.acc.toFixed(4), 'info');
+          }
+        }
+      }
     });
+    
+    const evalResult = model.evaluate(processedData.test.xs, processedData.test.ys);
+    const testLoss = (await evalResult[0].data())[0];
+    const testAcc = (await evalResult[1].data())[0];
+    
+    log('✓ Training complete!', 'success');
+    log('Test Accuracy: ' + (testAcc * 100).toFixed(2) + '%', 'success');
+    log('Test Loss: ' + testLoss.toFixed(4), 'info');
+    
+    displayMetrics(testAcc, testLoss);
+    calculateFeatureImportance();
+    
+    $('predictBtn').disabled = false;
+    $('batchPredictBtn').disabled = false;
+    
+    evalResult.forEach(t => t.dispose());
+  } catch (error) {
+    log('Training error: ' + error.message, 'error');
+    console.error(error);
+  }
+};
     
     model.compile({
       optimizer: tf.train.adam(0.001),
