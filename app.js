@@ -1629,11 +1629,14 @@ function calculateFeatureImportance() {
   parts.push('<div class="feature-importance">');
   importance.forEach((feat, idx) => {
     const percentage = (feat.value * 100).toFixed(1);
-    parts.push('<div class="feature-bar" title="' + feat.name + ': ' + percentage + '%">');
+    parts.push('<div style="display: flex; align-items: center; margin: 10px 0;">');
+    parts.push('<div style="min-width: 180px; font-size: 0.9em; color: #2d3748; font-weight: 500; padding-right: 10px; text-align: right;">' + feat.name + '</div>');
+    parts.push('<div class="feature-bar" title="' + feat.name + ': ' + percentage + '%" style="flex: 1;">');
     parts.push('<div class="feature-bar-fill" style="width: ' + percentage + '%">');
-    parts.push('<span style="font-size: 0.85em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 8px;">');
-    parts.push(feat.name + ': ' + percentage + '%');
+    parts.push('<span style="font-size: 0.9em; font-weight: 600; padding: 0 10px;">');
+    parts.push(percentage + '%');
     parts.push('</span>');
+    parts.push('</div>');
     parts.push('</div>');
     parts.push('</div>');
   });
