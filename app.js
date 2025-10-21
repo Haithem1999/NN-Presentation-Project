@@ -702,23 +702,23 @@ function buildMLPModel() {
 }
 
 async function trainModel() {
-  log('Training Deep MLP model with 50 epochs...');
+  log('Training MLP model...');
   
   const history = await model.fit(processedData.train.x, processedData.train.y, {
-    epochs: 50,
+    epochs: 100,
     batchSize: 32,
     validationSplit: 0.2,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
-        if (epoch % 5 === 0) {
-          log(`Epoch ${epoch + 1}/50: loss=${logs.loss.toFixed(4)}, acc=${logs.acc.toFixed(4)}, val_acc=${logs.val_acc.toFixed(4)}`);
+        if (epoch % 10 === 0) {
+          log(`Epoch ${epoch + 1}: loss=${logs.loss.toFixed(4)}, acc=${logs.acc.toFixed(4)}, val_acc=${logs.val_acc.toFixed(4)}`);
         }
       }
     }
   });
   
   trainingHistory = history;
-  log('Model training completed - 50 epochs', 'success');
+  log('Model training completed', 'success');
 }
 
 async function evaluateModel() {
@@ -907,7 +907,7 @@ function performPostTrainingAnalysis() {
     <div class="analysis-grid">
       <!-- MLP Architecture Details -->
       <div class="analysis-card">
-        <h4>🧠 Deep MLP Architecture Details</h4>
+        <h4>🧠 MLP Architecture Details</h4>
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0;">
           <strong style="color: #667eea;">Model Type:</strong> ${mlpArchitecture.modelType}<br><br>
           <strong style="color: #667eea;">Total Parameters:</strong> ${mlpArchitecture.totalParameters.toLocaleString()}<br><br>
@@ -961,8 +961,10 @@ function performPostTrainingAnalysis() {
         </div>
         
         <div class="insight-item">
-          <strong>Training Configuration:</strong><br>
-          Trained for 50 epochs with batch size 32. Deep architecture with 5 hidden layers enables learning complex customer behavior patterns.
+          <strong>Training Stability:</strong><br>
+          Model trained for ${trainingHistory.params.epochs} epochs with batch size ${trainingHistory.params.batchSize}.
+          ${trainingHistory.history.val_acc ? 
+            'Validation accuracy tracked for overfitting prevention.' : ''}
         </div>
       </div>
       
@@ -985,32 +987,32 @@ function performPostTrainingAnalysis() {
         </div>
         
         <div class="insight-item">
-          <strong>Campaign Efficiency:</strong><br>
+          <strong>Cost-Benefit Ratio:</strong><br>
           With ${tp} correct predictions and ${fp} false alarms, retention campaign efficiency is ${((tp/(tp+fp))*100).toFixed(1)}%.
         </div>
       </div>
       
-      <!-- Technical Recommendations -->
+      <!-- Recommendations -->
       <div class="analysis-card">
-        <h4>🎯 Technical Recommendations</h4>
+        <h4>🎯 Action Recommendations</h4>
+        <div class="insight-item">
+          <strong>High Priority:</strong><br>
+          Focus retention efforts on the ${tp} correctly identified at-risk customers for maximum ROI.
+        </div>
+        
         <div class="insight-item">
           <strong>Model Monitoring:</strong><br>
-          Track model performance monthly. Retrain when accuracy drops below 85% or data distribution shifts.
+          Retrain model quarterly or when accuracy drops below 85% to maintain performance.
         </div>
         
         <div class="insight-item">
           <strong>Feature Engineering:</strong><br>
-          Review top 10 important features. Consider collecting additional behavioral data on these dimensions.
+          Review top 10 important features. Consider collecting additional data on these dimensions.
         </div>
         
         <div class="insight-item">
-          <strong>Threshold Optimization:</strong><br>
+          <strong>Threshold Tuning:</strong><br>
           Current threshold: 0.5. Adjust based on business cost of false positives vs false negatives.
-        </div>
-        
-        <div class="insight-item">
-          <strong>Deep Architecture Benefits:</strong><br>
-          5-layer MLP enables capturing non-linear interactions between customer features for better predictions.
         </div>
       </div>
     </div>
