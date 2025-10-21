@@ -1,14 +1,4 @@
-$('predictBtn').onclick = async () => {
-  if (!model) {
-    alert('Please train the model first');
-    return;
-  }
-  
-  try {
-    const tenure = parseFloat($('tenure').value);
-    const monthly = parseFloat($('monthlyCharges').value);
-    const total = parseFloat($('totalCharges').value);
-    const contract = parseInt/* =========================================================================
+/* =========================================================================
    Smart Customer Churn Prediction System - Main Application
    Business Value: Reduce churn by 15-20% through predictive intervention
    ========================================================================= */
@@ -297,7 +287,6 @@ function displayDataQuality() {
   }
   parts.push('</div>');
   
-  // Fixed completeness calculation
   const totalMissingCells = Object.values(dataQualityInfo.missingValues).reduce((sum, v) => sum + v.count, 0);
   const totalCells = dataQualityInfo.totalRows * dataQualityInfo.totalColumns;
   const totalIssues = totalMissingCells + (dataQualityInfo.duplicates * dataQualityInfo.totalColumns);
@@ -612,7 +601,7 @@ function createDistributionChart(column, canvasId) {
 
 $('viewDataBtn').onclick = () => {
   openModal('dataViewModal');
-  displayDataset('first10'); // Default to first 10 rows
+  displayDataset('first10');
 };
 
 window.displayDataset = function(option) {
@@ -677,10 +666,8 @@ function analyzeAndRecommendFeatures() {
   const columns = Object.keys(rawData[0]);
   const recommendations = [];
   
-  // Analyze available columns and recommend features
   const hasColumn = (col) => columns.some(c => c.toLowerCase().includes(col.toLowerCase()));
   
-  // 1. Tenure-based features
   if (hasColumn('tenure')) {
     recommendations.push({
       id: 'tenureGroup',
@@ -701,7 +688,6 @@ function analyzeAndRecommendFeatures() {
     });
   }
   
-  // 2. Charge-based features
   if (hasColumn('monthly') && hasColumn('total')) {
     recommendations.push({
       id: 'chargeRatio',
@@ -742,7 +728,6 @@ function analyzeAndRecommendFeatures() {
     });
   }
   
-  // 3. Service-based features
   const serviceColumns = columns.filter(col => 
     col.toLowerCase().includes('online') || 
     col.toLowerCase().includes('tech') ||
@@ -773,7 +758,6 @@ function analyzeAndRecommendFeatures() {
     }
   }
   
-  // 4. Contract-based features
   if (hasColumn('contract')) {
     recommendations.push({
       id: 'contractRisk',
@@ -785,7 +769,6 @@ function analyzeAndRecommendFeatures() {
     });
   }
   
-  // 5. Interaction features
   if (hasColumn('tenure') && hasColumn('monthly')) {
     recommendations.push({
       id: 'tenureChargeInteraction',
@@ -865,7 +848,6 @@ function displayFeatureEngineeringModal(recommendations) {
 }
 
 window.applySelectedFeatures = function() {
-  // Get selected features
   selectedFeatures = [];
   const checkboxes = document.querySelectorAll('#featureCheckboxes input[type="checkbox"]');
   checkboxes.forEach(cb => {
@@ -954,7 +936,6 @@ window.applySelectedFeatures = function() {
     
     closeModal('featureEngineeringModal');
     
-    // Display summary
     const featureNames = selectedFeatures.map(f => {
       const names = {
         tenureGroup: 'Tenure Groups',
@@ -978,13 +959,11 @@ window.applySelectedFeatures = function() {
     parts.push('</div>');
     $('engineeredFeaturesInfo').innerHTML = parts.join('');
     
-    // Rerun preprocessing
     log('Updating preprocessing with engineered features...', 'info');
     processedData = preprocessData(rawData);
     log('✓ Data preprocessing updated', 'success');
     log('Total features for training: ' + processedData.train.xs.shape[1], 'info');
     
-    // Update button
     $('trainBtn').disabled = false;
     $('featureEngineeringBtn').textContent = '✅ Features Created (' + selectedFeatures.length + ')';
     $('featureEngineeringBtn').style.background = '#28a745';
@@ -997,47 +976,7 @@ window.applySelectedFeatures = function() {
 }
 
 /* ========================================================================
-   STEP 2: MODEL TRAINING (Updated for engineered features)
-   ======================================================================== */// 9. Tenure in Years (if not exists)
-      row.TenureYears = (tenure / 12).toFixed(2);
-      
-      // 10. Payment per Service
-      row.PaymentPerService = serviceCount > 0 ? (monthly / serviceCount).toFixed(2) : monthly;
-    });
-    
-    engineeredFeatures = true;
-    
-    log('✓ Created 10 new engineered features', 'success');
-    log('✓ Features: TenureGroup, ChargeRatio, ValueSegment, ServiceCount, ContractRisk', 'success');
-    log('✓ Features: TenureChargeInteraction, AvgMonthlySpend, HighValueFlag, TenureYears, PaymentPerService', 'success');
-    
-    closeModal('featureEngineeringModal');
-    
-    // Show success message
-    alert('✅ Feature Engineering Complete!\n\n10 new features created:\n' +
-          '• Tenure Groups\n• Charge Ratio\n• Value Segment\n• Service Count\n' +
-          '• Contract Risk\n• Tenure-Charge Interaction\n• Avg Monthly Spend\n' +
-          '• High Value Flag\n• Tenure Years\n• Payment Per Service\n\n' +
-          'You can now proceed to train the model with enhanced features!');
-    
-    // Rerun preprocessing
-    log('Updating preprocessing with new features...', 'info');
-    processedData = preprocessData(rawData);
-    log('✓ Data preprocessing updated with engineered features', 'success');
-    
-    // Update button state
-    $('trainBtn').disabled = false;
-    $('featureEngineeringBtn').textContent = '✅ Features Engineered';
-    $('featureEngineeringBtn').style.background = '#28a745';
-    
-  } catch (error) {
-    log('Error in feature engineering: ' + error.message, 'error');
-    console.error(error);
-  }
-}
-
-/* ========================================================================
-   STEP 2: MODEL TRAINING (Updated for engineered features)
+   CATEGORICAL AND CORRELATION ANALYSIS
    ======================================================================== */
 
 function analyzeCategoricalVariables() {
@@ -1289,6 +1228,10 @@ function createChurnChart() {
   });
 }
 
+/* ========================================================================
+   DATA PREPROCESSING
+   ======================================================================== */
+
 function preprocessData(data) {
   log('Preprocessing data...', 'info');
   
@@ -1307,7 +1250,6 @@ function preprocessData(data) {
       parseFloat(row.tenure || 0) / 12
     ];
     
-    // Add only the selected engineered features
     if (engineeredFeatures && selectedFeatures.length > 0) {
       selectedFeatures.forEach(featureId => {
         switch(featureId) {
@@ -1349,7 +1291,6 @@ function preprocessData(data) {
     labels.push(row.Churn === 'Yes' || row.Churn === '1' ? 1 : 0);
   });
   
-  // Build feature names based on what's included
   featureNames = ['tenure', 'monthlyCharges', 'totalCharges', 'contract', 
                   'onlineSecurity', 'techSupport', 'internetService', 'tenureYears'];
   
@@ -1433,6 +1374,10 @@ function encodeBinary(value) {
   return (lower === 'yes' || lower === '1') ? 1 : 0;
 }
 
+/* ========================================================================
+   MODEL TRAINING
+   ======================================================================== */
+
 $('trainBtn').onclick = async () => {
   if (!processedData.train) {
     alert('Please load data first');
@@ -1513,50 +1458,6 @@ $('trainBtn').onclick = async () => {
     $('batchPredictBtn').disabled = false;
     
     evalResult.forEach(t => t.dispose());
-  } catch (error) {
-    log('Training error: ' + error.message, 'error');
-    console.error(error);
-  }
-};
-    
-    model.compile({
-      optimizer: tf.train.adam(0.001),
-      loss: 'binaryCrossentropy',
-      metrics: ['accuracy']
-    });
-    
-    log('✓ Model architecture created', 'success');
-    log('Training model... (this may take 1-2 minutes)', 'info');
-    
-    await model.fit(processedData.train.xs, processedData.train.ys, {
-      epochs: 50,
-      batchSize: 32,
-      validationSplit: 0.2,
-      callbacks: {
-        onEpochEnd: (epoch, logs) => {
-          if ((epoch + 1) % 10 === 0) {
-            log('Epoch ' + (epoch + 1) + '/50 - loss: ' + logs.loss.toFixed(4) + ', acc: ' + logs.acc.toFixed(4), 'info');
-          }
-        }
-      }
-    });
-    
-    const evalResult = model.evaluate(processedData.test.xs, processedData.test.ys);
-    const testLoss = (await evalResult[0].data())[0];
-    const testAcc = (await evalResult[1].data())[0];
-    
-    log('✓ Training complete!', 'success');
-    log('Test Accuracy: ' + (testAcc * 100).toFixed(2) + '%', 'success');
-    log('Test Loss: ' + testLoss.toFixed(4), 'info');
-    
-    displayMetrics(testAcc, testLoss);
-    calculateFeatureImportance();
-    
-    $('predictBtn').disabled = false;
-    $('batchPredictBtn').disabled = false;
-    
-    evalResult.forEach(t => t.dispose());
-    
   } catch (error) {
     log('Training error: ' + error.message, 'error');
     console.error(error);
@@ -1672,6 +1573,10 @@ function calculateFeatureImportance() {
   log('✓ Feature importance calculated', 'success');
 }
 
+/* ========================================================================
+   PREDICTIONS
+   ======================================================================== */
+
 $('predictBtn').onclick = async () => {
   if (!model) {
     alert('Please train the model first');
@@ -1688,7 +1593,6 @@ $('predictBtn').onclick = async () => {
     
     let input = [tenure, monthly, total, contract, 1, 1, 1, tenure / 12];
     
-    // Add selected engineered features if they were used in training
     if (engineeredFeatures && selectedFeatures.length > 0) {
       selectedFeatures.forEach(featureId => {
         switch(featureId) {
@@ -1708,7 +1612,7 @@ $('predictBtn').onclick = async () => {
             input.push(valueSegment);
             break;
           case 'serviceCount':
-            input.push(3); // Assuming some services
+            input.push(3);
             break;
           case 'contractRisk':
             const contractRisk = contract === 0 ? 3 : contract === 1 ? 2 : 1;
@@ -1898,6 +1802,10 @@ $('visualizeBtn').onclick = () => {
   tfvis.show.modelSummary({ name: 'Model Architecture' }, model);
   log('✓ Model visualization opened', 'success');
 };
+
+/* ========================================================================
+   INITIALIZATION
+   ======================================================================== */
 
 async function init() {
   try {
