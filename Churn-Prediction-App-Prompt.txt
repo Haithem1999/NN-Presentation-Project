@@ -1,0 +1,800 @@
+COMPREHENSIVE PROMPT FOR SMART CUSTOMER CHURN PREDICTION SYSTEM
+================================================================================
+
+PROJECT TITLE: Smart Customer Churn Prediction System - AI-Powered Customer Retention Platform
+
+================================================================================
+OVERVIEW & BUSINESS REQUIREMENTS
+================================================================================
+
+Create a complete, production-ready web application for customer churn prediction that provides end-to-end machine learning capabilities. The application should be a single-page application (SPA) using vanilla JavaScript, TensorFlow.js, and modern web technologies.
+
+BUSINESS VALUE PROPOSITION:
+- Reduce customer acquisition costs by 5-7x through targeted retention
+- Protect 15-20% of revenue by identifying at-risk customers
+- Provide AI-driven, personalized retention strategies
+- Enable predictive intelligence 1-3 months ahead for proactive intervention
+
+TARGET USERS:
+- Business analysts
+- Customer success managers
+- Data scientists
+- Marketing teams
+- C-level executives
+
+================================================================================
+TECHNICAL STACK & DEPENDENCIES
+================================================================================
+
+REQUIRED TECHNOLOGIES:
+1. Frontend: Pure HTML5, CSS3, JavaScript (ES6+)
+2. Machine Learning: TensorFlow.js (latest version)
+3. Visualization: 
+   - Chart.js 4.4.0 for charts and graphs
+   - TensorFlow.js Vis for model visualization
+4. No backend required - fully client-side application
+5. No build tools - direct browser execution
+
+CDN LIBRARIES TO INCLUDE:
+- https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest
+- https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@latest
+- https://cdn.jsdelivr.net/npm/chart.js@4.4.0
+
+================================================================================
+APPLICATION ARCHITECTURE & WORKFLOW
+================================================================================
+
+STEP-BY-STEP USER WORKFLOW:
+
+STEP 1: DATA LOADING & COMPREHENSIVE EXPLORATORY DATA ANALYSIS (EDA)
+- File upload component for CSV files
+- Automatic CSV parsing with robust error handling
+- Comprehensive EDA dashboard with multiple analysis tabs:
+  
+  TAB 1: Quick Overview
+  - Display total records, features, churn rate, at-risk customers
+  - Show key business metrics: average tenure, monthly charges
+  - Calculate potential revenue loss
+  - Present insights in visually appealing metric cards
+
+  TAB 2: Data Quality Assessment
+  - Detect and report missing values by column
+  - Identify duplicate records
+  - Calculate overall data completeness percentage
+  - Detect data types (numerical vs categorical)
+  - Provide interactive modals for handling:
+    * Missing values (3 options: drop rows, fill with mean, fill with mode)
+    * Duplicate records (2 options: remove duplicates, keep all)
+  - Display quality cards with color-coded status (good/warning/bad)
+
+  TAB 3: Numerical Variables Analysis
+  - Analyze columns: tenure, MonthlyCharges, TotalCharges
+  - Calculate and display: mean, median, standard deviation, range
+  - Create histogram distributions using Chart.js
+  - Display statistics in organized metric cards
+
+  TAB 4: Categorical Variables Analysis
+  - Analyze columns: Contract, InternetService, OnlineSecurity, TechSupport
+  - Create pie charts for each categorical variable
+  - Display frequency tables with counts and percentages
+  - Use interactive visualizations
+
+  TAB 5: Feature Correlations
+  - Calculate correlations between numerical features
+  - Display correlation bar chart
+  - Highlight strong correlations (>0.7)
+
+  TAB 6: Churn Analysis (Target Variable)
+  - Show churn vs retained customer counts
+  - Display churn rate percentage
+  - Calculate business impact (revenue loss estimation)
+  - Create doughnut chart for visual distribution
+  - Provide retention campaign recommendations
+
+ADDITIONAL DATA FEATURES:
+- "View Dataset" button with modal showing:
+  * All rows option
+  * First 10 rows option
+  * Last 10 rows option
+  * Scrollable table with sticky headers
+  * Row numbering
+
+STEP 2: FEATURE ENGINEERING (OPTIONAL BUT RECOMMENDED)
+- Intelligent feature recommendation system
+- Analyze dataset and suggest 10+ engineered features:
+
+  1. Tenure Groups (High Impact)
+     - Categories: New (0-12 months), Mid (13-36), Long (36+)
+     - Rationale: Different tenure groups show distinct churn patterns
+
+  2. Tenure in Years (Medium Impact)
+     - Convert months to years for better scaling
+     - Rationale: Normalized time representation
+
+  3. Charge Ratio (High Impact)
+     - Monthly charges relative to historical average
+     - Rationale: Identifies changing spending patterns
+
+  4. Average Monthly Spend (Medium Impact)
+     - Total charges divided by tenure
+     - Rationale: Smooths payment fluctuations
+
+  5. Value Segment (High Impact)
+     - Categories: Low (<$35), Medium ($35-$70), High (>$70)
+     - Rationale: Different tiers need different retention strategies
+
+  6. High Value Customer Flag (Medium Impact)
+     - Binary indicator for premium customers
+     - Rationale: Quick identification of valuable customers
+
+  7. Service Count (High Impact)
+     - Total number of additional services
+     - Rationale: More services = higher engagement, lower churn
+
+  8. Payment Per Service (Medium Impact)
+     - Average cost per service used
+     - Rationale: Identifies value perception issues
+
+  9. Contract Risk Score (High Impact)
+     - Risk based on contract type (Month-to-month=3, One year=2, Two year=1)
+     - Rationale: Contract type is strong churn indicator
+
+  10. Tenure-Charge Interaction (Medium Impact)
+      - Combined feature: (Tenure × Monthly Charges) / 100
+      - Rationale: Captures relationship between loyalty and spending
+
+FEATURE ENGINEERING UI:
+- Modal with checkboxes for each feature
+- Impact indicators (High/Medium/Low) with color coding
+- Pre-select high-impact features
+- Show "What it does" and "Why it helps" for each feature
+- Display expected benefits (5-15% accuracy improvement)
+- Scrollable container for easy selection
+- Success message showing created features after application
+
+STEP 3: DEEP NEURAL NETWORK TRAINING
+ARCHITECTURE: Deep Multi-Layer Perceptron (MLP)
+
+MODEL SPECIFICATIONS:
+- Architecture: 256 → 128 → 64 → 32 → 1
+- Input layer: Variable size based on features (8+ base features + engineered features)
+- Hidden Layer 1: 256 units, ReLU activation, He Normal initialization
+- Batch Normalization 1
+- Dropout 1: 30% rate
+- Hidden Layer 2: 128 units, ReLU activation, He Normal initialization
+- Batch Normalization 2
+- Dropout 2: 25% rate
+- Hidden Layer 3: 64 units, ReLU activation, He Normal initialization
+- Batch Normalization 3
+- Dropout 3: 20% rate
+- Hidden Layer 4: 32 units, ReLU activation, He Normal initialization
+- Batch Normalization 4
+- Dropout 4: 15% rate
+- Output layer: 1 unit, Sigmoid activation (binary classification)
+
+TRAINING CONFIGURATION:
+- Optimizer: Adam with learning rate 0.001
+- Loss function: Binary Crossentropy
+- Metrics: Accuracy
+- Epochs: 50
+- Batch size: 32
+- Validation split: 20%
+- Log progress every 10 epochs
+
+RATIONALE FOR ARCHITECTURE:
+- Deep MLP is optimal for tabular data
+- Batch Normalization ensures stable training
+- Dropout prevents overfitting
+- He initialization works well with ReLU
+- Progressive layer size reduction (256→128→64→32) extracts hierarchical features
+
+POST-TRAINING DISPLAY:
+- Test accuracy (as percentage)
+- Test loss
+- Precision, Recall, F1-Score metrics
+- Business impact calculation (saved revenue estimation)
+- Interactive bar chart showing all metrics
+- Feature importance analysis using SHAP-like technique
+
+FEATURE IMPORTANCE CALCULATION:
+- Implement SHAP-inspired marginal contribution analysis
+- Sample 100 test instances
+- For each feature, calculate prediction difference with/without feature
+- Display top 5 most important features
+- Show horizontal bar chart with percentages
+- Color-coded bars with gradient
+
+MODEL VISUALIZATION:
+- "Visualize Training" button
+- Open TensorFlow.js Visor
+- Show model summary (layer architecture)
+- Display custom HTML description with:
+  * Complete architecture details
+  * Key features (Batch Norm, Dropout, He init)
+  * Benefits for tabular data
+  * Training specifications
+
+STEP 4: REAL-TIME PREDICTIONS
+TWO PREDICTION MODES:
+
+MODE 1: SINGLE CUSTOMER PREDICTION
+Input fields:
+- Tenure (months) - number input
+- Monthly Charges ($) - number input
+- Total Charges ($) - number input
+- Contract Type - dropdown (Month-to-month, One year, Two year)
+
+Prediction Output Display:
+- Churn probability percentage
+- Risk level classification:
+  * HIGH RISK: >70% (red, 🔴 emoji)
+  * MEDIUM RISK: 40-70% (yellow, 🟡 emoji)
+  * LOW RISK: <40% (green, 🟢 emoji)
+- Customer metrics:
+  * Customer Lifetime Value (monthly × 24)
+  * Estimated Retention Cost (monthly × 2)
+  * Net Value if Retained
+- AI-generated retention strategies (personalized based on risk and profile)
+- Recommended action with timeline
+
+RETENTION STRATEGIES BY RISK LEVEL:
+
+HIGH RISK Strategies:
+- New Customer Bonus (if tenure < 12): 20% discount for 3 months
+- Contract Upgrade (if month-to-month): 15% savings + free premium features
+- Service Optimization (if high charges): Review plan, suggest alternatives
+- Personal Touch: Assign dedicated account manager
+- Loyalty Reward: Exclusive perks, early access to features
+
+MEDIUM RISK Strategies:
+- Engagement Boost: Send personalized tips
+- Value Addition: 30-day complimentary upgrade trial
+- Feedback Loop: Satisfaction survey with discount incentive
+
+LOW RISK Strategies:
+- Maintain Excellence: Continue quality service
+- Upsell Opportunity: Present relevant premium features
+- Referral Program: Encourage referrals with rewards
+
+MODE 2: BATCH PREDICTION (Top 10 At-Risk)
+- Process entire test dataset
+- Sort by churn probability (descending)
+- Display top 10 highest-risk customers
+- Show for each:
+  * Rank
+  * Customer ID/index
+  * Churn probability
+  * Priority action timeline
+- Provide batch analysis summary:
+  * Total high-risk count
+  * Potential revenue at risk
+  * Expected retention success (70%)
+  * ROI calculation for retention campaign
+
+================================================================================
+DATA PREPROCESSING REQUIREMENTS
+================================================================================
+
+ENCODING STRATEGIES:
+1. Numerical features: Direct use (tenure, MonthlyCharges, TotalCharges)
+2. Contract encoding: Month-to-month=0, One year=1, Two year=2
+3. Binary features: Yes=1, No=0 (OnlineSecurity, TechSupport, InternetService)
+4. Tenure years: tenure / 12
+
+NORMALIZATION:
+- Min-Max scaling for all features
+- Store scaler parameters for prediction time
+- Apply to both training and test sets
+
+DATA SPLITTING:
+- 80% training, 20% test split
+- Convert to TensorFlow tensors (tensor2d)
+- Separate features (xs) and labels (ys)
+
+LABEL ENCODING:
+- "Yes" or "1" → 1 (churned)
+- "No" or "0" → 0 (retained)
+
+================================================================================
+USER INTERFACE & DESIGN REQUIREMENTS
+================================================================================
+
+DESIGN SYSTEM:
+
+COLOR PALETTE:
+- Primary gradient: Linear gradient from #667eea to #764ba2
+- Success: #28a745 (green)
+- Warning: #ffc107 (yellow/amber)
+- Danger: #dc3545 (red)
+- Info: #4299e1 (blue)
+- Background: White (#ffffff)
+- Text primary: #2d3748 (dark gray)
+- Text secondary: #6c757d (medium gray)
+
+TYPOGRAPHY:
+- Font family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+- Header font size: 2.5em
+- Subheader: 1.2em
+- Body: 1em
+- Monospace (logs): 'Courier New', monospace
+
+LAYOUT:
+- Maximum container width: 1600px
+- Main content: 2-column grid (1fr 1fr) with 20px gap
+- Responsive: Single column on mobile (<768px)
+- Full-width sections span both columns
+- Border radius: 8-20px for various elements
+- Box shadows for depth
+
+COMPONENTS:
+
+1. Header Section:
+   - Gradient background (purple)
+   - White text with shadow
+   - Centered title and subtitle
+   - 30px padding
+
+2. Business Value Box:
+   - Yellow/amber warning-style background (#fff3cd)
+   - Left border accent (5px, #ffc107)
+   - List with emoji bullets (💰)
+   - Prominent positioning below header
+
+3. Section Cards:
+   - Light gray background (#f8f9fa)
+   - Rounded corners (10px)
+   - Box shadow for elevation
+   - Purple section headers with bottom border
+
+4. Buttons:
+   - Primary: Purple gradient
+   - Secondary: Green gradient
+   - Danger: Red gradient
+   - Info: Blue gradient
+   - Hover effect: Lift up 2px with shadow
+   - Disabled state: Gray, no pointer, no transform
+   - Padding: 12px 24px
+   - Font weight: 600
+
+5. Status Boxes:
+   - White background
+   - Left accent border (4px)
+   - Color-coded: blue (info), green (success), yellow (warning), red (error)
+   - Rounded corners
+   - 15px padding
+
+6. Metric Cards:
+   - White background
+   - Large value (2em, bold, purple)
+   - Smaller label below (gray)
+   - Box shadow
+   - Centered text
+   - Grid layout (auto-fit, minmax 200px)
+
+7. System Logs:
+   - Black terminal background (#1e1e1e)
+   - Green text (#00ff00)
+   - Monospace font
+   - Auto-scroll to bottom
+   - Max height: 300px with overflow scroll
+   - Timestamp for each log entry
+   - Emoji indicators: ✅ success, ❌ error, ⚠️ warning, 📝 info
+
+8. Charts:
+   - Container: White background, 15px padding, rounded
+   - Height: 300px (some 250px for smaller charts)
+   - Responsive and maintains aspect ratio
+   - Chart.js styling with purple/gradient colors
+
+9. Modal Dialogs:
+   - Dark overlay (rgba(0,0,0,0.5))
+   - White centered content box
+   - 80% width, max 600px (900px for feature engineering)
+   - Slide-in animation from top
+   - Close button (×) in header
+   - Fade-in animation
+
+10. EDA Tabs:
+    - Horizontal flex layout with gap
+    - Inactive: Gray background
+    - Active: Purple gradient with white text
+    - Smooth transitions
+    - Content fade-in when switching
+
+11. Data Quality Cards:
+    - Gradient background (light gray)
+    - Left purple border accent
+    - Hover lift effect
+    - Large value display
+    - Status badge (good/warning/bad)
+
+12. Data Table:
+    - Full width, collapsed borders
+    - Purple gradient header (sticky on scroll)
+    - White text in header
+    - Zebra striping on hover
+    - Bottom border for rows
+    - Padding: 10-12px
+
+13. Prediction Result Cards:
+    - Risk-based left border and background:
+      * High: Red border, pink background
+      * Medium: Yellow border, cream background
+      * Low: Green border, light green background
+    - Large emoji indicators
+    - Grid layout for metrics
+    - Retention strategies section
+    - Recommended actions box
+
+14. Feature Importance Bars:
+    - Horizontal bar chart style
+    - Gray background bar
+    - Purple gradient fill
+    - Percentage label inside fill
+    - Smooth width transition animation
+    - Feature name aligned right
+
+15. Option Cards (for feature selection):
+    - Light gray background
+    - Left purple border
+    - Hover effect: Shift right, darker background
+    - Selected state: Blue background
+    - Recommendation badges (green pill)
+    - Support for checkboxes
+
+ANIMATIONS:
+- Fade in: Opacity 0→1, translateY(10px)→0
+- Slide in: TranslateY(-50px)→0 with opacity
+- Button hover: Transform up 2px with shadow
+- Card hover: Transform up 5px
+- Tab switch: Fade content in/out
+- All transitions: 0.2-0.3s duration
+
+ACCESSIBILITY:
+- Proper semantic HTML
+- Labels for all inputs
+- ARIA attributes where needed
+- Sufficient color contrast
+- Keyboard navigation support
+- Focus indicators
+
+================================================================================
+LOGGING SYSTEM REQUIREMENTS
+================================================================================
+
+LOGGING FUNCTIONALITY:
+- Real-time log display in console-style container
+- Four log types: info (📝), success (✅), warning (⚠️), error (❌)
+- Each log entry format: [HH:MM:SS] EMOJI Message
+- Auto-scroll to bottom on new entry
+- Dual output: Visual log container + browser console
+- Color coding in terminal display
+
+LOG EVENTS TO TRACK:
+- File selection and loading start
+- CSV parsing progress
+- Data loading success with record count
+- EDA completion for each analysis type
+- Data quality assessment results
+- Feature engineering start and completion
+- Each engineered feature created
+- Data preprocessing steps
+- Model building and architecture creation
+- Training progress (every 10 epochs)
+- Training completion with metrics
+- Feature importance calculation
+- Prediction requests and results
+- Error messages with details
+- User actions (button clicks, modal opens)
+
+================================================================================
+ERROR HANDLING & VALIDATION
+================================================================================
+
+ERROR SCENARIOS TO HANDLE:
+1. No file selected when clicking load button
+2. Empty CSV file
+3. Malformed CSV format
+4. Missing required columns
+5. Invalid data types in columns
+6. Training before data loaded
+7. Prediction before model trained
+8. TensorFlow.js initialization failures
+9. WebGL backend not available (fallback to CPU)
+10. Memory issues with large datasets
+
+VALIDATION RULES:
+- CSV must have headers
+- Minimum required columns: tenure, MonthlyCharges, TotalCharges, Churn, Contract
+- Numerical fields must be valid numbers
+- Churn must be Yes/No or 1/0
+- All prediction inputs must be filled
+- Tensor shape validation before operations
+
+ERROR MESSAGES:
+- User-friendly alerts for critical errors
+- Detailed error logs in console
+- Recovery suggestions when possible
+- Graceful degradation (CPU fallback for GPU)
+
+================================================================================
+PERFORMANCE OPTIMIZATION
+================================================================================
+
+OPTIMIZATION STRATEGIES:
+1. Tensor disposal after operations to prevent memory leaks
+2. Batch processing for predictions
+3. Lazy loading of charts (setTimeout 100ms)
+4. Efficient CSV parsing (single pass)
+5. Data caching (originalDataBackup for reset capability)
+6. Destroy existing charts before creating new ones
+7. Use WebGL backend when available
+8. Min-Max normalization (faster than StandardScaler)
+9. Limit batch prediction display to top 10
+10. Use requestAnimationFrame for smooth animations
+
+MEMORY MANAGEMENT:
+- Dispose tensors: evalResult.forEach(t => t.dispose())
+- Clear chart references: if (charts[id]) charts[id].destroy()
+- Store only necessary data in memory
+- Use JSON.parse(JSON.stringify()) for deep clones
+
+================================================================================
+BUSINESS INTELLIGENCE FEATURES
+================================================================================
+
+REVENUE CALCULATIONS:
+- Customer Lifetime Value = Monthly Charges × 24 months
+- Retention Cost = Monthly Charges × 2
+- Net Value if Retained = CLV - Retention Cost
+- Annual Revenue at Risk = At-Risk Customers × Avg Monthly × 12
+- Potential Savings = Revenue at Risk × 70% (retention success rate)
+- ROI = Savings / (At-Risk Count × Retention Cost)
+
+KEY PERFORMANCE INDICATORS:
+- Churn Rate = Churned / Total × 100
+- Average Tenure (months)
+- Average Monthly Charge ($)
+- Total At-Risk Customers
+- Data Completeness Percentage
+- Model Accuracy (%)
+- Precision, Recall, F1-Score
+
+BUSINESS INSIGHTS AUTO-GENERATION:
+- Potential revenue loss estimation
+- Recommended intervention timelines
+- Segment-specific strategies
+- Priority ranking for action
+- ROI projections
+- Success rate expectations (70-80% retention)
+
+================================================================================
+TECHNICAL IMPLEMENTATION DETAILS
+================================================================================
+
+GLOBAL VARIABLES:
+- rawData: Array of customer records
+- processedData: Object with train/test tensors and scaler
+- model: TensorFlow.js sequential model
+- featureNames: Array of feature column names
+- stats: Object with dataset statistics
+- dataQualityInfo: Object with quality metrics
+- charts: Object storing Chart.js instances
+- engineeredFeatures: Boolean flag
+- originalDataBackup: Deep clone of original data
+- selectedFeatures: Array of selected engineered feature IDs
+
+HELPER FUNCTIONS:
+- $(id): document.getElementById shorthand
+- log(msg, type): Logging utility
+- parseCSV(text): CSV to JSON parser
+- encodeBinary(value): Yes/No to 1/0
+- encodeContract(value): Contract type to number
+- encodeTenureGroup(group): Tenure category to number
+- encodeValueSegment(segment): Value tier to number
+
+KEY FUNCTIONS:
+- performComprehensiveEDA(): Master EDA orchestrator
+- displayQuickOverview(): Render overview metrics
+- assessDataQuality(): Detect quality issues
+- displayDataQuality(): Render quality dashboard
+- analyzeNumericalVariables(): Stats + histograms
+- analyzeCategoricalVariables(): Frequencies + pie charts
+- analyzeCorrelations(): Correlation analysis
+- analyzeChurnPatterns(): Target variable analysis
+- createDistributionChart(column, canvasId): Histogram creation
+- createCategoricalChart(column, canvasId): Pie chart creation
+- createCorrelationChart(): Correlation bar chart
+- createChurnChart(): Churn doughnut chart
+- analyzeAndRecommendFeatures(): Feature engineering recommendations
+- displayFeatureEngineeringModal(recommendations): Show feature selection UI
+- applySelectedFeatures(): Create engineered features
+- preprocessData(data): Complete preprocessing pipeline
+- displayMetrics(accuracy, loss): Show training results
+- createMetricsChart(...): Performance metrics bar chart
+- calculateFeatureImportance(): SHAP-like importance
+- displayPredictionResult(...): Show prediction with strategies
+- generateRetentionStrategy(...): Create personalized strategies
+
+MODAL FUNCTIONS:
+- openModal(modalId): Display modal
+- closeModal(modalId): Hide modal
+- window.onclick: Close modal on overlay click
+- showMissingValuesDetails(): Missing values modal
+- handleMissingValues(method): Process missing data
+- showDuplicatesDetails(): Duplicates modal
+- handleDuplicates(method): Process duplicates
+
+TAB NAVIGATION:
+- showEDATab(tabName, event): Switch between EDA tabs
+
+DATA VIEW:
+- displayDataset(option): Show all/first10/last10 rows
+
+EVENT LISTENERS:
+- loadDataBtn.onclick: Data loading pipeline
+- trainBtn.onclick: Model training
+- predictBtn.onclick: Single prediction
+- batchPredictBtn.onclick: Batch prediction
+- visualizeBtn.onclick: Open TF.js Visor
+- featureEngineeringBtn.onclick: Start feature engineering
+- viewDataBtn.onclick: Open data view modal
+
+================================================================================
+DEPLOYMENT & COMPATIBILITY
+================================================================================
+
+BROWSER REQUIREMENTS:
+- Modern browsers with ES6+ support
+- WebGL support (recommended, CPU fallback available)
+- Local file system access for CSV upload
+- IndexedDB for TensorFlow.js (automatic)
+
+FILE STRUCTURE:
+- index.html: Complete HTML structure with embedded CSS
+- app.js: All JavaScript logic (single file, ~2500+ lines)
+- No build process required
+- Can run from file:// protocol or web server
+
+TESTING CHECKLIST:
+1. CSV upload and parsing
+2. All EDA tabs display correctly
+3. Missing values handling (all 3 methods)
+4. Duplicate handling (both methods)
+5. Feature engineering selection and creation
+6. Model training completes successfully
+7. Single prediction with all risk levels
+8. Batch prediction displays top 10
+9. Charts render correctly
+10. Modals open and close
+11. Responsive design on mobile
+12. Error handling for edge cases
+13. Memory management (no leaks)
+14. Performance with large datasets (5000+ rows)
+
+================================================================================
+SAMPLE DATA EXPECTATIONS
+================================================================================
+
+EXPECTED CSV FORMAT:
+Headers: customerID, gender, SeniorCitizen, Partner, Dependents, tenure, 
+PhoneService, MultipleLines, InternetService, OnlineSecurity, OnlineBackup, 
+DeviceProtection, TechSupport, StreamingTV, StreamingMovies, Contract, 
+PaperlessBilling, PaymentMethod, MonthlyCharges, TotalCharges, Churn
+
+REQUIRED COLUMNS FOR CORE FUNCTIONALITY:
+- tenure (numerical, months)
+- MonthlyCharges (numerical, dollars)
+- TotalCharges (numerical, dollars)
+- Contract (categorical: Month-to-month, One year, Two year)
+- Churn (binary: Yes/No or 1/0)
+
+OPTIONAL COLUMNS FOR ENHANCED ANALYSIS:
+- OnlineSecurity, TechSupport, OnlineBackup, DeviceProtection
+- StreamingTV, StreamingMovies
+- InternetService
+- PaymentMethod
+- All other customer demographics
+
+TYPICAL DATASET SIZE:
+- Development: 1,000-5,000 rows
+- Production: Up to 50,000 rows
+- Features: 15-25 columns
+
+================================================================================
+DOCUMENTATION & COMMENTS
+================================================================================
+
+CODE DOCUMENTATION STYLE:
+- Section headers with box-drawing characters
+- Function-level comments explaining purpose
+- Inline comments for complex logic
+- Business context in comments
+- TODO markers for future enhancements
+
+SECTION HEADERS IN CODE:
+/* ========================================================================
+   SECTION NAME
+   ======================================================================== */
+
+USER-FACING DOCUMENTATION:
+- Tooltips on hover for complex features
+- "What it does" and "Why it helps" for feature engineering
+- Inline help text in status boxes
+- Business impact calculations with explanations
+- Recommended actions with clear timelines
+
+================================================================================
+FUTURE ENHANCEMENT SUGGESTIONS
+================================================================================
+
+POTENTIAL ADDITIONS (Not required for v1.0):
+1. Export predictions to CSV
+2. Model save/load functionality
+3. Multiple model comparison
+4. A/B testing framework
+5. Real-time data integration
+6. Custom feature engineering wizard
+7. Advanced SHAP visualizations
+8. Confusion matrix display
+9. ROC curve analysis
+10. Customer segmentation clustering
+11. Time-series trend analysis
+12. Automated hyperparameter tuning
+13. Model explainability reports
+14. Dashboard customization
+15. Multi-model ensemble
+
+================================================================================
+SUCCESS CRITERIA
+================================================================================
+
+FUNCTIONAL REQUIREMENTS MET:
+✓ Complete data upload and validation
+✓ Comprehensive 6-tab EDA system
+✓ Interactive data quality handling
+✓ Smart feature engineering with 10+ recommendations
+✓ Deep MLP model (256-128-64-32-1 architecture)
+✓ Training with progress logging
+✓ Real-time single predictions
+✓ Batch predictions (top 10)
+✓ Feature importance (SHAP-like)
+✓ Business intelligence calculations
+✓ Personalized retention strategies
+✓ Professional UI with smooth animations
+✓ Comprehensive error handling
+✓ Responsive design
+✓ Performance optimized
+✓ Memory management implemented
+
+QUALITY STANDARDS:
+- Model accuracy: >75% expected
+- Training time: <2 minutes for 5000 rows
+- UI responsiveness: <100ms for interactions
+- No memory leaks during extended use
+- Clean, maintainable code
+- Professional visual design
+- Intuitive user experience
+- Comprehensive logging
+
+================================================================================
+FINAL NOTES
+================================================================================
+
+This application demonstrates enterprise-grade machine learning capabilities 
+in a pure client-side implementation. The focus is on:
+
+1. USABILITY: Non-technical users can operate it
+2. INSIGHTS: Actionable business intelligence at every step
+3. FLEXIBILITY: Handles various dataset formats and sizes
+4. RELIABILITY: Robust error handling and validation
+5. PERFORMANCE: Optimized for speed and memory efficiency
+6. DESIGN: Professional, modern interface
+7. VALUE: Clear ROI and business impact visualization
+
+The system should feel like a premium SaaS product while running entirely 
+in the browser without requiring any backend infrastructure.
+
+================================================================================
+END OF PROMPT
+================================================================================
